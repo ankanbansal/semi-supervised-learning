@@ -1,0 +1,5 @@
+*.log
+*.aux
+*.bbl
+latex_files/*.pdf
+models/*
