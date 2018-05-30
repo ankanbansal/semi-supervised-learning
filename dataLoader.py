@@ -4,7 +4,7 @@ import json
 import ipdb
 import socket
 
-from helper_functions import JsonProgress
+from helperFunctions import JsonProgress
 
 from PIL import Image
 from sklearn.preprocessing import  MultiLabelBinarizer, OneHotEncoder
@@ -40,8 +40,7 @@ class ValTransform(object):
                                          std=[0.229,0.224,0.225])
         # Might not want to do a random crop or horizontal flip
         image_transform = transforms.Compose([transforms.Resize(256),
-                                              transforms.RandomCrop(224),
-                                              transforms.RandomHorizontalFlip(),
+                                              transforms.CenterCrop(224),
                                               transforms.ToTensor(),
                                               normalize])
         sample['image'] = image_transform(sample['image'])
@@ -50,12 +49,12 @@ class ValTransform(object):
 class ImgDataset(Dataset):
     def __init__(self,json_file,options,transform=None):
         print "Loading data file..."
-        self.___ = json.load(open(json_file, object_hook=JsonProgress))
+        self.all_files = json.load(open(json_file, object_hook=JsonProgress))
         self.transform = transform
     def __len__(self):
-        return len(self.___)
+        return len(self.all_files)
     def __getitem__(self,idx):
-        sample = self.___[idx].copy()
+        sample = self.all_files[idx].copy()
         try:
             sample['image'] = Image.open(sample['image_name']).convert('RGB')
         except:

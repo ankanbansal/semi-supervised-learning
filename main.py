@@ -5,10 +5,10 @@ import ipdb
 import argparse
 
 import models
-import data_loader
+import dataLoader
 from train import train_model, validate_model
 from losses import get_loss
-from helper_functions import save_checkpoint, adjust_learning_rate
+from helperFunctions import save_checkpoint, adjust_learning_rate
 
 import torch
 import torch.nn as nn
@@ -48,8 +48,8 @@ if __name__ == "__main__":
     options = argparser()
     best_metric = 0.0
     is_best = False
-    model = models.________
-    criterion = _____
+    model = models.BasicClassificationModel()
+    criterion = get_loss('CE')
 
     model = nn.DataParallel(model).cuda()
     torch.multiprocessing.set_sharing_strategy('file_system')
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     cudnn.benchmark = True
 
     print 'Creating data loaders...'
-    train_loader, val_loader = data_loader.loaders(options)
+    train_loader, val_loader = dataLoader.loaders(options)
     print 'Created data loaders'
 
     optimizer = torch.optim.SGD(model.parameters(), options['learning_rate'])
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
         # Validate
         if options['val_on']:
-            metric = validate_model(_____)
+            metric = validate_model()
             is_best = metric > best_metric
             best_metric = max(metric,best_metric)
 

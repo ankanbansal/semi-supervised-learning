@@ -3,3 +3,4 @@
 *.bbl
 latex_files/*.pdf
 models/*
+Data/*
