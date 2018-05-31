@@ -37,28 +37,30 @@ class BasicClassificationModel(nn.Module):
         #f = self.avg_pool(f).view(f.size(0),-1)
         f = F.avg_pool2d(f, kernel_size=7, stride=1).view(f.size(0), -1)
         y = self.classifier(f)
-        # Note that this is not doing softmax. Loss takes care of that. During test/validation have
-        # to explicitly do a softmax
         return y
 
 
-#class FirstModel(nn.Module):
-#    def __init__(self,options):
-#        super(FirstModel, self).__init__()
-#        arch = options['base_arch']
-#        if arch == 'densenet161':
-#            pretrained_model = tv_models.densenet161(pretrained=True)
-#        elif arch == 'densenet169':
-#            pretrained_model = tv_models.densenet169(pretrained=True)
-#        elif arch == 'densenet201':
-#            pretrained_model = tv_models.densenet201(pretrained=True)
-#        elif arch == 'resnet152':
-#            pretrained_model = tv_models.resnet152(pretrained=True)
-#
-#        self.features = pretrained_model.features
-#        self.avg_pool = nn.AvgPool2d(7)
-#        in_feats = pretrained_model.classifier.in_features + .....
-#        out_feats = .....
-#        self.classifier = (nn.Linear(out_feats, options['num_classes']))
-#
-#    def forward(self, img):
+class WSODModel(nn.Module):
+    def __init__(self,options):
+        super(FirstModel, self).__init__()
+        arch = options['base_arch']
+        if arch == 'densenet161':
+            pretrained_model = tv_models.densenet161(pretrained=True)
+        elif arch == 'densenet169':
+            pretrained_model = tv_models.densenet169(pretrained=True)
+        elif arch == 'densenet201':
+            pretrained_model = tv_models.densenet201(pretrained=True)
+        elif arch == 'resnet152':
+            pretrained_model = tv_models.resnet152(pretrained=True)
+
+        self.features = pretrained_model.features
+        #self.avg_pool = nn.AvgPool2d(7)
+        self.classifier = pretrained_model.classifier
+
+    def forward(self, img):
+        feat_map = self.features(img) # Note that this is before the ReLU
+        f = F.relu(f,inplace=True)
+        #f = self.avg_pool(f).view(f.size(0),-1)
+        lin_feat = F.avg_pool2d(f, kernel_size=7, stride=1).view(f.size(0),-1)  # First 1-D feature
+        y = self.classifier(lin_feat)
+        return feat_map, lin_feat, y

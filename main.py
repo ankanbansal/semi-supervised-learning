@@ -6,7 +6,8 @@ import argparse
 
 import models
 import dataLoader
-from train import train_model#, validate_model
+#from train import train_basic_model#, validate_model
+from train import train_wsod_model#, validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
 
@@ -51,8 +52,11 @@ if __name__ == "__main__":
     options = argparser()
     best_metric = 0.0
     is_best = False
-    model = models.BasicClassificationModel(options)
-    criterion = get_loss('CE')
+    #model = models.BasicClassificationModel(options)
+    model = models.WSODModel(options)
+    criterion_cls = get_loss('CE')
+    criterion_loc = get_loss('LocalityLoss')
+    criterion_clust = get_loss('ClusterLoss')
 
     model = nn.DataParallel(model).cuda()
     torch.multiprocessing.set_sharing_strategy('file_system')
@@ -79,7 +83,8 @@ if __name__ == "__main__":
         adjust_learning_rate(optimizer, epoch, options)
         print 'Training for epoch:', epoch
 
-        train_model(train_loader,model,criterion,optimizer,epoch,options)
+        #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
+        train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options)
 
         # Validate
         if options['val_on']:
@@ -91,5 +96,5 @@ if __name__ == "__main__":
                          'base_arch': options['base_arch'],
                          'state_dict': model.state_dict(),
                          'best_metric': best_metric},
-                        filename = 'models/checkpoint_epoch_{}.pth.tar'.format(epoch),
+                        filename = 'checkpoints/checkpoint_epoch_{}.pth.tar'.format(epoch),
                         is_best=is_best)

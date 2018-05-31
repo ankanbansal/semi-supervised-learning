@@ -3,4 +3,5 @@
 *.bbl
 latex_files/*.pdf
 models/*
+checkpoints/*
 Data/*
