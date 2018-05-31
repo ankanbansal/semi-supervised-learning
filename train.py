@@ -18,12 +18,12 @@ def train_model(train_loader, model, criterion, optimizer, epoch, options):
 
     for j, data in enumerate(train_loader):
         input_img_var = Variable(data['image'].cuda(async=True))
-        target_var = Variable(data[''].cuda(async=True))
+        target_var = Variable(data['label'].cuda(async=True))
 
         data_time.update(time.time() - end)
 
-        _____ = model(input_img_var, _____)
-        loss = criterion(____, target_var)
+        logits = model(input_img_var)
+        loss = criterion(logits, target_var)
 
         losses.update(loss.data[0])
 
@@ -42,5 +42,5 @@ def train_model(train_loader, model, criterion, optimizer, epoch, options):
                       len(train_loader), loss=losses, batch_time=batch_time, data_time=data_time))
 
 
-def validate_model():
+#def validate_model():
 # Training iterations

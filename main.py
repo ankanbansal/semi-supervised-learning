@@ -6,7 +6,7 @@ import argparse
 
 import models
 import dataLoader
-from train import train_model, validate_model
+from train import train_model#, validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
 
@@ -30,11 +30,14 @@ def argparser():
             help='Which model to use as the base architecture')
     parser.add_argument('--mode', type=str, default='train', choices=['train','test','validate'])
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
-    parser.add_argument('--batch_size', type=int, default=20)
+    parser.add_argument('--batch_size', type=int, default=120)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--train_json_file', type=str, default='')
     parser.add_argument('--val_on', type=bool, default=False)
     parser.add_argument('--val_json_file', type=str, default='')
+    parser.add_argument('--train_img_dir', type=str,
+            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
+    parser.add_argument('--val_img_dir', type=str, default='')
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)
@@ -48,7 +51,7 @@ if __name__ == "__main__":
     options = argparser()
     best_metric = 0.0
     is_best = False
-    model = models.BasicClassificationModel()
+    model = models.BasicClassificationModel(options)
     criterion = get_loss('CE')
 
     model = nn.DataParallel(model).cuda()
@@ -56,7 +59,7 @@ if __name__ == "__main__":
 
     if options['resume']:
         if os.path.isfile(options['resume']):
-            print 'Loading checkpoint {}...'.format(options['resume'])
+            print 'Loading checkpoint {} ...'.format(options['resume'])
             checkpoint = torch.load(options['resume'])
             options['start_epoch'] = checkpoint['epoch']
             model.load_state_dict(checkpoint['state_dict'])
@@ -89,4 +92,4 @@ if __name__ == "__main__":
                          'state_dict': model.state_dict(),
                          'best_metric': best_metric},
                         filename = 'models/checkpoint_epoch_{}.pth.tar'.format(epoch),
-                        is_best)
+                        is_best=is_best)

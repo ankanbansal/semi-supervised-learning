@@ -5,16 +5,16 @@ import torch
 import torch.nn as nn
 
 # Custom loss definitions
-class ClusterLoss(torch.nn.Module):
-    def __init__(self):
-        super(ClusterLoss, self).__init__()
-    def forward(self, ____, ____):
-
-
-class LocalityLoss(torch.nn.Module):
-    def __init__(self):
-        super(LocalityLoss, self).__init__()
-    def forward(self, _____, ____):
+#class ClusterLoss(torch.nn.Module):
+#    def __init__(self):
+#        super(ClusterLoss, self).__init__()
+#    def forward(self, ____, ____):
+#
+#
+#class LocalityLoss(torch.nn.Module):
+#    def __init__(self):
+#        super(LocalityLoss, self).__init__()
+#    def forward(self, _____, ____):
 
 
 def get_loss(loss_name ='CE'):

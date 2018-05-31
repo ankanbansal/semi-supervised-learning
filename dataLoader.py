@@ -47,18 +47,23 @@ class ValTransform(object):
         return sample
 
 class ImgDataset(Dataset):
-    def __init__(self,json_file,options,transform=None):
+    def __init__(self,json_file,options,transform=None, validation=False):
         print "Loading data file..."
-        self.all_files = json.load(open(json_file, object_hook=JsonProgress))
+        #self.all_files = json.load(open(json_file), object_hook=JsonProgress)
+        self.all_files = json.load(open(json_file))
         self.transform = transform
+        if validation:
+            self.img_dir = options['val_img_dir']
+        else:
+            self.img_dir = options['train_img_dir']
     def __len__(self):
         return len(self.all_files)
     def __getitem__(self,idx):
         sample = self.all_files[idx].copy()
         try:
-            sample['image'] = Image.open(sample['image_name']).convert('RGB')
+            sample['image'] = Image.open(os.path.join(self.img_dir,sample['image_name'])).convert('RGB')
         except:
-            print "Cannot load image: ", sample['image_name']
+            print "Cannot load image: ", os.path.join(self.img_dir,sample['image_name'])
             return None
         if self.transform:
             sample = self.transform(sample)
@@ -69,7 +74,7 @@ def loaders(options):
     val_file = options['val_json_file']
 
     train_transform = TrainTransform()
-    val_transform - ValTransform()
+    val_transform = ValTransform()
 
     print "Creating train dataset..."
     train_dataset = ImgDataset(train_file, options, transform=train_transform)
@@ -78,9 +83,9 @@ def loaders(options):
                               shuffle=True,
                               num_workers=options['num_workers'])
 
-    if model_options['val_on']:
+    if options['val_on']:
         print "Creating validation dataset..."
-        val_dataset = ImgDataset(val_file, options, transform=val_transform)
+        val_dataset = ImgDataset(val_file, options, transform=val_transform, validation=True)
         val_loader = DataLoader(val_dataset,
                                 batch_size=options['batch_size'],
                                 num_workers=options['num_workers'])
