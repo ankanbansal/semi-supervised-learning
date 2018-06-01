@@ -55,12 +55,30 @@ class WSODModel(nn.Module):
 
         self.features = pretrained_model.features
         #self.avg_pool = nn.AvgPool2d(7)
-        self.classifier = pretrained_model.classifier
+        self.blocks = nn.Sequential(nn.Linear(pretrained_model.feature.out_features, _____),
+                                    nn.ReLU())
+        self.argmax = ____
+        #self.classifier = pretrained_model.classifier
+        self.classifier = nn.Linear(_____)
 
-    def forward(self, img):
+    def forward(self, img, M, options):
         feat_map = self.features(img) # Note that this is before the ReLU
         f = F.relu(f,inplace=True)
         #f = self.avg_pool(f).view(f.size(0),-1)
         lin_feat = F.avg_pool2d(f, kernel_size=7, stride=1).view(f.size(0),-1)  # First 1-D feature
-        y = self.classifier(lin_feat)
-        return feat_map, lin_feat, y
+        block_logits = self.blocks(lin_feat)
+        # TODO
+        #1. Number of chunks - M?
+        block_splits = torch.chunk(block_logits,M,dim=1)
+        K = block_logits.shape[-1]/M
+        block_sm = torch.empty_like(block_logits)
+        if options['mode'] == 'train':
+            # softmax
+            for i in range(len(block_splits)):
+                block_sm[:,i*K:(i+1)*K] = F.softmax(block_splits[i])
+        else:
+            # put a 1 at argmax and 0 everywhere else
+            for i in range(len(block_splits)):
+                block_sm[:,i*K:(i+1)*K] = self.______(block_splits[i])
+        logits = self.classifier(block_sm)
+        return feat_map, lin_feat, block_logits, logits

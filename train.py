@@ -61,12 +61,17 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
         data_time.update(time.time() - end)
 
-        feat_map, lin_feats, logits = model(input_img_var)
+        #TODO
+        # 1. M
+        # 2. loss_1
+        feat_map, lin_feats, block_logits, logits = model(input_img_var, M, options)
         loss_0 = criterion_cls(logits, target_var)
         loss_1 = criterion_loc(feat_map, target_var)
-        loss_2 = criterion_clust(lin_feats, target_var)
+        loss_2 = criterion_clust(block_logits)
 
-        loss = loss_0 + loss_1 + loss_2
+        #TODO
+        # c1 and c2
+        loss = loss_0 + c1*loss_1 + c2*loss_2
 
         losses.update(loss.data[0])
 
