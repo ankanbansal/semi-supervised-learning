@@ -70,7 +70,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         # Modify criterion_cls to take care of missing labels. i.e. return a loss only for those
         # instances which have a label available
         loss_0 = criterion_cls(logits, target_var)
-        loss_1 = criterion_loc(feat_map, target_var)
+        loss_1 = criterion_loc(feat_map)
         loss_2 = criterion_clust(block_logits)
 
         #TODO
@@ -92,7 +92,6 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data Time {data_time.val:.3f} ({data_time.avg:.3f})\t'.format(epoch, j,
                       len(train_loader), loss=losses, batch_time=batch_time, data_time=data_time))
-
 
 
 #def validate_model():

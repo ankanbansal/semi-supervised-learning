@@ -54,7 +54,7 @@ class ClusterLoss(torch.nn.Module):
         #TODO
         # 1. Define lmbda
         # 2. Pass M
-        # 3. Use torch operations instead of for loops if you want to use multiple GPUs
+        # 3. Use torch operations instead of for loops if you want to use multiple GPUs ???
         return L
 
 

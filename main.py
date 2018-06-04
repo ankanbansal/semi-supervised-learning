@@ -39,6 +39,8 @@ def argparser():
     parser.add_argument('--train_img_dir', type=str,
             default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
     parser.add_argument('--val_img_dir', type=str, default='')
+    parser.add_argument('--num_blocks', type=int, default=16)
+    parser.add_argument('--block_size', type=int, default=32)
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)
