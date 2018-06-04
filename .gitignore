@@ -1,6 +1,7 @@
-*.log
-*.aux
-*.bbl
+*.pyc
+latex_files/*.log
+latex_files/*.aux
+latex_files/*.bbl
 latex_files/*.pdf
 models/*
 checkpoints/*

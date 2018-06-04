@@ -42,7 +42,7 @@ class BasicClassificationModel(nn.Module):
 
 class WSODModel(nn.Module):
     def __init__(self,options):
-        super(FirstModel, self).__init__()
+        super(WSODModel, self).__init__()
         self.num_blocks = options['num_blocks']
         self.block_size = options['block_size']
         self.num_classes = options['num_classes']
@@ -61,7 +61,7 @@ class WSODModel(nn.Module):
         #self.avg_pool = nn.AvgPool2d(7)
         #TODO 
         # Is there supposed to be a ReLU in blocks?
-        self.blocks = nn.Sequential(nn.Linear(pretrained_model.feature.out_features,
+        self.blocks = nn.Sequential(nn.Linear(pretrained_model.classifier.in_features,
                                               self.num_blocks*self.block_size),
                                     nn.ReLU())
         #self.classifier = pretrained_model.classifier
@@ -69,7 +69,7 @@ class WSODModel(nn.Module):
 
     def forward(self, img, options):
         feat_map = self.features(img) # Note that this is before the ReLU
-        f = F.relu(f,inplace=True)
+        f = F.relu(feat_map,inplace=True)
         #f = self.avg_pool(f).view(f.size(0),-1)
         lin_feat = F.avg_pool2d(f, kernel_size=7, stride=1).view(f.size(0),-1)  # First 1-D feature
         block_logits = self.blocks(lin_feat)
@@ -81,7 +81,9 @@ class WSODModel(nn.Module):
         if options['mode'] == 'train':
             # softmax
             for i in range(len(block_splits)):
-                block_sm[:,i*K:(i+1)*K] = F.softmax(block_splits[i])
+                #TODO
+                # check if dim=1 is correct
+                block_sm[:,i*K:(i+1)*K] = F.softmax(block_splits[i],dim=1)
         else:
             # put a 1 at argmax and 0 everywhere else
             for i in range(len(block_splits)):

@@ -64,7 +64,8 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         #TODO
         # 1. M
         # 2. loss_1
-        feat_map, lin_feats, block_logits, logits = model(input_img_var, M, options)
+        feat_map, lin_feats, block_logits, logits = model(input_img_var, options)
+        #ipdb.set_trace()
         # TODO
         # For levels of unsupervision:
         # Modify criterion_cls to take care of missing labels. i.e. return a loss only for those
@@ -75,7 +76,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
         #TODO
         # c1 and c2
-        loss = loss_0 + c1*loss_1 + c2*loss_2
+        loss = loss_0 + options['gamma_1']*loss_1 + options['gamma_2']*loss_2
 
         losses.update(loss.data[0])
 
@@ -92,7 +93,6 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data Time {data_time.val:.3f} ({data_time.avg:.3f})\t'.format(epoch, j,
                       len(train_loader), loss=losses, batch_time=batch_time, data_time=data_time))
-
 
 #def validate_model():
 # Training iterations
