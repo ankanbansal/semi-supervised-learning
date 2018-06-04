@@ -71,7 +71,7 @@ class WSODModel(nn.Module):
         #1. Number of chunks - M?
         block_splits = torch.chunk(block_logits,M,dim=1)
         K = block_logits.shape[-1]/M
-        block_sm = torch.empty_like(block_logits)
+        block_sm = torch.empty_like(block_logits)  # Instead of making a list, make a tensor
         if options['mode'] == 'train':
             # softmax
             for i in range(len(block_splits)):

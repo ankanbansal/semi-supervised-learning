@@ -29,19 +29,25 @@ class ClusterLoss(torch.nn.Module):
         blocks = torch.chunk(block_feats, M, dim=1)  # blocks contains M chunks. Each with shape TxK
         sum1 = []
         for i in range(block_feats.shape[0]):
-            image_sum = 0.0
+            image_sum = None
             for m in range(M):
-                image_sum += self.entropy(blocks[m][i,:])
+                if image_sum == None:
+                    image_sum = self.entropy(blocks[m][i,:])
+                else:
+                    image_sum += self.entropy(blocks[m][i,:])
             sum1.append(image_sum/M)
         # This might not work because sum1 is a list
         L1 = torch.mean(sum1)
         
         #Batch Entropy Loss - For uniform support
         #  L2 = -Sum_block_m(Entropy(Sum_batch_i(block_i_m)/T))/M
-        sum2 = 0.0
+        sum2 = None
         for m in range(M):
             block_mean = torch.mean(blocks[m],dim=0)
-            sum2 += self.entropy(block_mean)
+            if sum2 == None:
+                sum2 = self.entropy(block_mean)
+            else:
+                sum2 += self.entropy(block_mean)
         L2 = -1.0*sum2/M
 
         L = L1 + lmbda*L2
@@ -49,14 +55,67 @@ class ClusterLoss(torch.nn.Module):
         # 1. Define lmbda
         # 2. Pass M
         # 3. Use torch operations instead of for loops if you want to use multiple GPUs
+        return L
 
-        
 
+class LocalityLoss(torch.nn.Module):
+    def __init__(self):
+        super(LocalityLoss, self).__init__()
+    def group_activity(self,group):
+        # Function to calculate the group activity
+        # Basically just vectorizes the whole group and calculates the L2 norm
+        group_vec = group.view(group.size(0),-1)  # The size -1 is inferred from the other
+        # dimensions. This essentially keeps the batch_size same and vectorizes everything else
+        #group_vec is now bs x num_pixels_in_group
+        zeros = torch.empty_like(group_vec)
+        return F.pairwise_distance(group_vec, zeros, 2) # L2-norm
+    def forward(self, feat_map):
+        """
+        Input: feat_map -> T x (HxWxD)  # Where H is the height of the feature map, W is the width,
+        and D is the depth. T is the batch size.
+        Output: L = Locality Loss -> penalises activations with large spreads in the feature map
+        """
+        # Create 4 or 6 groups. And add the loss over each group.
+        # Basically loop over groups and call the group_activity function. Store everything in an
+        # array and return the L1 norm of the array. I think.
+        # TODO
+        # Find the paper and see the exact implementation
+        # L1 -> top to bottom
+        # L2 -> bottom to top
+        # L3 -> left to right
+        # L4 -> right to left
+        group_activity_1 = torch.zeros([feat_map.shape[0],feat_map.shape[1]]).cuda()
+        #TODO
+        # Does the .cuda() help or make sense?
+        for i in range(feat_map.shape[1]):
+            group = feat_map[:,i:,:,:] 
+            group_activity_1[:,i] = self.group_activity(group)
+        zeros = torch.empty_like(group_activity_1)
+        L1 = torch.mean(F.pairwise_distance(group_activity_1,zeros,1))   # L1-norm
 
-#class LocalityLoss(torch.nn.Module):
-#    def __init__(self):
-#        super(LocalityLoss, self).__init__()
-#    def forward(self, _____, ____):
+        group_activity_2 = torch.zeros([feat_map.shape[0],feat_map.shape[1]]).cuda()
+        for j in reversed(range(feat_map.shape[1])):
+            group = feat_map[:,:j,:,:]
+            group_activity_2[:,j] = self.group_activity(group)
+        zeros = torch.empty_like(group_activity_2)
+        L2 = torch.mean(F.pairwise_distance(group_activity_2,zeros,1)) 
+
+        group_activity_3 = torch.zeros([feat_map.shape[0],feat_map.shape[2]]).cuda()
+        for k in range(feat_map.shape[2]):
+            group = feat_map[:,:,k:,:]
+            group_activity_3[:,k] = self.group_activity(group)
+        zeros = torch.empty_like(group_activity_3)
+        L3 = torch.mean(F.pairwise_distance(group_activity_3,zeros,1)) 
+
+        group_activity_4 = torch.zeros([feat_map.shape[0],feat_map.shape[2]]).cuda()
+        for l in reversed(range(feat_map.shape[2])):
+            group = feat_map[:,:,:l,:]
+            group_activity_4[:,l] = self.group_activity(group)
+        zeros = torch.empty_like(group_activity_4)
+        L4 = torch.mean(F.pairwise_distance(group_activity_4,zeros,1))
+
+        tot_loss = (L1 + L2 + L3 + L4)/4.0
+        return tot_loss
 
 
 def get_loss(loss_name ='CE'):
