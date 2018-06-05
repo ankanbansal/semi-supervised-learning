@@ -2,6 +2,8 @@
 latex_files/*.log
 latex_files/*.aux
 latex_files/*.bbl
+latex_files/*.blg
+latex_files/*.brf
 latex_files/*.pdf
 logs/*
 models/*
