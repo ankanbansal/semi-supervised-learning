@@ -15,17 +15,14 @@ import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.optim
-#import torch.utils.data
-#from torch.autograd import Variable
 
-#import torchvision.models as tv_models
-#import torchvision.transforms as transforms
-#import torchvision.datasets as datasets
+from tensorboardX import SummaryWriter
 
 
 # Main file for everything
 def argparser():
     parser = argparse.ArgumentParser(description='Weakly Supervised Object Detection')
+    parser.add_argument('--log_dir', type=str, default='./logs/')
     parser.add_argument('--base_arch', type=str, default='densenet161',
             choices=['densenet161','densenet169','densenet201','resnet152'], 
             help='Which model to use as the base architecture')
@@ -41,9 +38,9 @@ def argparser():
     parser.add_argument('--val_img_dir', type=str, default='')
     parser.add_argument('--num_blocks', type=int, default=16)
     parser.add_argument('--block_size', type=int, default=32)
-    parser.add_argument('--lmbda', type=float, default=1.0)
-    parser.add_argument('--gamma_1', type=float, default=1.0)
-    parser.add_argument('--gamma_2', type=float, default=1.0)
+    parser.add_argument('--lmbda', type=float, default=0.1)
+    parser.add_argument('--gamma_1', type=float, default=0.005)
+    parser.add_argument('--gamma_2', type=float, default=20.0)
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)
@@ -57,6 +54,7 @@ if __name__ == "__main__":
     options = argparser()
     best_metric = 0.0
     is_best = False
+    writer = SummaryWriter(options['log_dir'])
     #model = models.BasicClassificationModel(options)
     model = models.WSODModel(options)
     criterion_cls = get_loss(options,loss_name='CE')
@@ -89,7 +87,7 @@ if __name__ == "__main__":
         print 'Training for epoch:', epoch
 
         #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-        train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options)
+        train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
         # Validate
         if options['val_on']:
@@ -103,3 +101,4 @@ if __name__ == "__main__":
                          'best_metric': best_metric},
                         filename = 'checkpoints/checkpoint_epoch_{}.pth.tar'.format(epoch),
                         is_best=is_best)
+    writer.close()

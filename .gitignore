@@ -3,6 +3,7 @@ latex_files/*.log
 latex_files/*.aux
 latex_files/*.bbl
 latex_files/*.pdf
+logs/*
 models/*
 checkpoints/*
 Data/*
