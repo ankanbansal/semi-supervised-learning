@@ -66,6 +66,8 @@ class WSODModel(nn.Module):
         self.classifier = nn.Linear(self.num_blocks*self.block_size, self.num_classes)
 
     def forward(self, img, options):
+        #TODO
+        # Might want to impose locality on some other feature map or after ReLU
         feat_map = self.features(img) # Note that this is before the ReLU
         f = F.relu(feat_map,inplace=True)
         #f = self.avg_pool(f).view(f.size(0),-1)

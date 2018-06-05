@@ -1,11 +1,12 @@
 import os
 import json
+import csv
 
 if __name__ == "__main__":
-    root_dir = '/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train'
-    sub_dirs = [d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir,d))]
-    print len(sub_dirs)
     label_dict = {}
-    for j,d in enumerate(sub_dirs):
-        label_dict[d] = j
+    class_file = '/efs/data/imagenet/train_meta/subsets/meta/imagenet_classes.csv'
+    with open(class_file) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            label_dict[row['class_name']] = int(row['class'])
     json.dump(label_dict,open('./Data/label_dict.json','w'))

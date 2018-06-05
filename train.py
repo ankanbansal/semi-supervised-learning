@@ -56,7 +56,6 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
     model.train()
 
     end = time.time()
-
     for j, data in enumerate(train_loader):
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(data['label'].cuda(async=True))
@@ -106,5 +105,56 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                       len(train_loader), cls_loss=losses_cls, loc_loss=losses_loc,
                       clust_loss=losses_clust, loss=total_losses, batch_time=batch_time))
 
-#def validate_model():
-# Training iterations
+
+def validate_model(val_loader, model, criterion):
+    batch_time = AverageMeter()
+    losses_cls = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
+
+    model.eval()
+
+    end = time.time()
+    for j, data in enumerate(val_loader):
+        target = data['label'].cuda(async=True)
+        input_img_var = Variable(data['image'].cuda(async=True), volatile=True)
+        target_var = Variable(target, volatile=True)
+
+        _, _, _, logits = model(input_img_var, options)
+        loss = criterion(logits, target_var)
+
+        prec1, prec5 = accuracy(logits.data, target, topK=(1,5))
+        losses.update(loss.data[0], data['image'].size(0))
+        top1.update(prec1[0],data['image'].size(0))
+        top5.update(prec5[0],data['image'].size(0))
+
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        if j%options['print_freq'] == 0:
+            print('Test: [{0}/{1}]\t'
+                    'Time {batch_time.val:.3f} ({batch_time.avg:.3f}) | '
+                    'Loss {loss.val:.4f} ({loss.avg:.4f}) | '
+                    'Prec@1 {top1.val:.3f} ({top1.avg:.3f}) | '
+                    'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                        i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1,
+                        top5=top5)
+    
+    print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'.format(top1=top1, top5=top5))
+    return top1.avg
+
+
+def accuracy(output, target, topk=(1,)):
+    """Computes the precision@k for the specified values of k"""
+    maxk = max(topk)
+    batch_size = target.size(0)
+
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t()
+    correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+    res = []
+    for k in topk:
+        correct_k = correct[:k].view(-1).float().sum(0)
+        res.append(correct_k.mul_(100.0 / batch_size))
+    return res
