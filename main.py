@@ -28,9 +28,9 @@ def argparser():
             help='Which model to use as the base architecture')
     parser.add_argument('--mode', type=str, default='train', choices=['train','test','validate'])
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
-    parser.add_argument('--batch_size', type=int, default=80)
+    parser.add_argument('--batch_size', type=int, default=120)
     parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--train_json_file', type=str, default='./Data/train.json')
+    parser.add_argument('--train_json_file', type=str, default='./Data/train_1.json')
     parser.add_argument('--val_on', type=bool, default=False)
     parser.add_argument('--val_json_file', type=str, default='')
     parser.add_argument('--train_img_dir', type=str,
@@ -41,8 +41,8 @@ def argparser():
     #TODO
     # Cross-validate the hyper-parameters to obtain the best values
     parser.add_argument('--lmbda', type=float, default=0.1)
-    parser.add_argument('--gamma_1', type=float, default=0.005)
-    parser.add_argument('--gamma_2', type=float, default=20.0)
+    parser.add_argument('--gamma_1', type=float, default=0.01)
+    parser.add_argument('--gamma_2', type=float, default=100.0)
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)

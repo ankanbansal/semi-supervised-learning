@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Custom loss definitions
 class ClusterLoss(torch.nn.Module):
     """
     Cluster loss is comes from the SuBiC paper and consists of two losses.
@@ -125,7 +124,9 @@ class LocalityLoss(torch.nn.Module):
 
 def get_loss(options,loss_name ='CE'):
     if loss_name == 'CE':
-        criterion = nn.CrossEntropyLoss().cuda()
+        # ignore_index ignores the samples which have label -1000. This is useful for few-shot
+        # things.
+        criterion = nn.CrossEntropyLoss(ignore_index=-1000).cuda()
     elif loss_name == 'ClusterLoss':
         criterion = ClusterLoss(options).cuda()
     elif loss_name == 'LocalityLoss':

@@ -2,11 +2,13 @@ import os, sys
 import xml.etree.ElementTree as ET
 import json
 import argparse
+import random
 import ipdb
 
 def argparser():
     parser = argparse.ArgumentParser(description="Generating json files from xml")
     parser.add_argument('--label_dict_file', type=str, default='./Data/label_dict.json')
+    parser.add_argument('--ratio', type=int, default=1)
     parser.add_argument('--img_dir_root', type=str,
             default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/')
     parser.add_argument('--annot_dir_root', type=str,
@@ -77,7 +79,7 @@ if __name__ == "__main__":
     label_dict = json.load(open(options['label_dict_file']))
     if options['img_set'] == 'train':
         options['file_list'] = os.path.join(options['img_set_dir'], 'train_loc.txt')
-        options['save_file'] = os.path.join('./Data/', 'train.json')
+        options['save_file'] = os.path.join('./Data/', 'train_' + str(options['ratio']) + '.json')
     elif options['img_set'] == 'val':
         options['file_list'] = os.path.join(options['img_set_dir'], 'val.txt')
         options['save_file'] = os.path.join('./Data/', 'val.json')
@@ -97,7 +99,10 @@ if __name__ == "__main__":
                 print k
             img = {}
             img['image_name'] = fname + '.JPEG'
-            img['label'] = label_dict[fname.split('/')[0]]
+            if k%options['ratio'] == 0:
+                img['label'] = label_dict[fname.split('/')[0]]
+            else:
+                img['label'] = -1000
             all_images.append(img)
             k += 1
         json.dump(all_images,open(options['save_file'],'w'))
