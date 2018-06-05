@@ -59,8 +59,6 @@ class WSODModel(nn.Module):
 
         self.features = pretrained_model.features
         #self.avg_pool = nn.AvgPool2d(7)
-        #TODO 
-        # Is there supposed to be a ReLU in blocks?
         self.blocks = nn.Sequential(nn.Linear(pretrained_model.classifier.in_features,
                                               self.num_blocks*self.block_size),
                                     nn.ReLU())
@@ -72,25 +70,22 @@ class WSODModel(nn.Module):
         f = F.relu(feat_map,inplace=True)
         #f = self.avg_pool(f).view(f.size(0),-1)
         lin_feat = F.avg_pool2d(f, kernel_size=7, stride=1).view(f.size(0),-1)  # First 1-D feature
-        block_logits = self.blocks(lin_feat)
-        # TODO
-        #1. Number of chunks - M?
-        block_splits = torch.chunk(block_logits,self.num_blocks,dim=1)
+        block_logits = self.blocks(lin_feat)  # bs x (MK)
+        block_splits = torch.chunk(block_logits,self.num_blocks,dim=1)  # Length -> M
+                                                                        # block_splits[i] -> bs x K
         K = self.block_size
         block_sm = torch.empty_like(block_logits)  # Instead of making a list, make a tensor
+                                                   # block_sm -> bs x (MK)
         if options['mode'] == 'train':
             # softmax
             for i in range(len(block_splits)):
-                #TODO
-                # check if dim=1 is correct
                 block_sm[:,i*K:(i+1)*K] = F.softmax(block_splits[i],dim=1)
         else:
             # put a 1 at argmax and 0 everywhere else
             for i in range(len(block_splits)):
-                # TODO
-                # verify that dim=1 is correct
-                max_ind = torch.argmax(block_splits[i],dim=1) # This should return a list of length bs of max indices
-                argmax_tensor = torch.zeros([block_splits.shape[0],block_splits.shape[1]])
+                max_ind = torch.argmax(block_splits[i],dim=1) # List of max indices
+                                                              # Length -> bs
+                argmax_tensor = torch.zeros([block_splits[i].shape[0],block_splits[i].shape[1]]) # bs x K
                 for j in range(argmax_tensor.shape[0]):
                     argmax_tensor[j,max_ind[j]] = 1.0
                 block_sm[:,i*K:(i+1)*K] = argmax_tensor

@@ -38,6 +38,8 @@ def argparser():
     parser.add_argument('--val_img_dir', type=str, default='')
     parser.add_argument('--num_blocks', type=int, default=16)
     parser.add_argument('--block_size', type=int, default=32)
+    #TODO
+    # Cross-validate the hyper-parameters to obtain the best values
     parser.add_argument('--lmbda', type=float, default=0.1)
     parser.add_argument('--gamma_1', type=float, default=0.005)
     parser.add_argument('--gamma_2', type=float, default=20.0)

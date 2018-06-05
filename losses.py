@@ -55,7 +55,6 @@ class ClusterLoss(torch.nn.Module):
 
         L = L1.cuda() + self.lmbda*L2.cuda()
         #TODO
-        # 1. Define lmbda
         # 3. Use torch operations instead of for loops if you want to use multiple GPUs ???
         return L
 
@@ -83,7 +82,7 @@ class LocalityLoss(torch.nn.Module):
         # Create 4 or 6 groups. And add the loss over each group.
         # Basically loop over groups and call the group_activity function. Store everything in an
         # array and return the L1 norm of the array. I think.
-        # TODO
+        #TODO
         # Find the paper and see the exact implementation
         # L1 -> top to bottom
         # L2 -> bottom to top
@@ -92,6 +91,7 @@ class LocalityLoss(torch.nn.Module):
         group_activity_1 = torch.zeros([feat_map.shape[0],feat_map.shape[2]]).cuda()
         #TODO
         # Does the .cuda() help or make sense?
+        #  - It probably doesn't hurt
         for i in range(feat_map.shape[2]):
             group = feat_map[:,:,i:,:] 
             group_activity_1[:,i] = self.group_activity(group)

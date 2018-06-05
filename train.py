@@ -61,9 +61,6 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(data['label'].cuda(async=True))
 
-        #TODO
-        # 1. M
-        # 2. loss_1
         feat_map, lin_feats, block_logits, logits = model(input_img_var, options)
         #ipdb.set_trace()
         # TODO
@@ -71,11 +68,11 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         # Modify criterion_cls to take care of missing labels. i.e. return a loss only for those
         # instances which have a label available
         loss_0 = criterion_cls(logits, target_var)
+        #TODO
+        # loss_1 has very high values in the initial few iterations. Might want to ignore these. 
         loss_1 = criterion_loc(feat_map)
         loss_2 = criterion_clust(block_logits)
 
-        #TODO
-        # gamma_1 and gamma_2
         loss = loss_0 + options['gamma_1']*loss_1 + options['gamma_2']*loss_2
 
         summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
