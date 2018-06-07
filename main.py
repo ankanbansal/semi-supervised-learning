@@ -7,7 +7,7 @@ import argparse
 import models
 import dataLoader
 #from train import train_basic_model#, validate_model
-from train import train_wsod_model#, validate_model
+from train import train_wsod_model, validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
 
@@ -27,22 +27,25 @@ def argparser():
             choices=['densenet161','densenet169','densenet201','resnet152'], 
             help='Which model to use as the base architecture')
     parser.add_argument('--mode', type=str, default='train', choices=['train','test','validate'])
+    parser.add_argument('--type', type=str, default='all',
+            choices=['cls','cls_loc','cls_clust','all'])
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
-    parser.add_argument('--batch_size', type=int, default=120)
+    parser.add_argument('--batch_size', type=int, default=140)
     parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--train_json_file', type=str, default='./Data/train_1.json')
+    parser.add_argument('--train_json_file', type=str, default='./Data/train_whole_1.json')
     parser.add_argument('--val_on', type=bool, default=False)
     parser.add_argument('--val_json_file', type=str, default='')
     parser.add_argument('--train_img_dir', type=str,
-            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
+            default='/efs/data/imagenet/train/')
+#            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
     parser.add_argument('--val_img_dir', type=str, default='')
-    parser.add_argument('--num_blocks', type=int, default=16)
-    parser.add_argument('--block_size', type=int, default=32)
+    parser.add_argument('--num_blocks', type=int, default=8)
+    parser.add_argument('--block_size', type=int, default=64)
     #TODO
     # Cross-validate the hyper-parameters to obtain the best values
-    parser.add_argument('--lmbda', type=float, default=0.1)
+    parser.add_argument('--lmbda', type=float, default=1.0)
     parser.add_argument('--gamma_1', type=float, default=0.01)
-    parser.add_argument('--gamma_2', type=float, default=100.0)
+    parser.add_argument('--gamma_2', type=float, default=0.5)
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)
@@ -54,7 +57,7 @@ def argparser():
 
 if __name__ == "__main__":
     options = argparser()
-    best_metric = 0.0
+    best_avg_prec = 0.0
     is_best = False
     writer = SummaryWriter(options['log_dir'])
     #model = models.BasicClassificationModel(options)
@@ -93,14 +96,16 @@ if __name__ == "__main__":
 
         # Validate
         if options['val_on']:
-            metric = validate_model()
-            is_best = metric > best_metric
-            best_metric = max(metric,best_metric)
+            avg_prec = validate_model(val_loader, model, criterion_cls)
+            is_best = avg_prec > best_avg_prec
+            if is_best:
+                print 'Best model till now: ', epoch
+            best_avg_prec = max(avg_prec,best_avg_prec)
 
         save_checkpoint({'epoch': epoch+1,
                          'base_arch': options['base_arch'],
                          'state_dict': model.state_dict(),
-                         'best_metric': best_metric},
-                        filename = 'checkpoints/checkpoint_epoch_{}.pth.tar'.format(epoch),
+                         'best_avg_prec': best_avg_prec},
+                        filename = 'checkpoints/checkpoint_{}_epoch_{}.pth.tar'.format(options['type'],epoch),
                         is_best=is_best)
     writer.close()

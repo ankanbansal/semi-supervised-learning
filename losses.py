@@ -29,17 +29,26 @@ class ClusterLoss(torch.nn.Module):
         #Mean Entropy Loss - For sparsity
         #  L1 = Sum_batch_i(Sum_block_m(Entropy(block_i_m)))/TM
         blocks = torch.chunk(block_feats, M, dim=1)  # blocks contains M chunks. Each with shape TxK
-        sum1 = torch.zeros([block_feats.shape[0],1])
-        for i in range(block_feats.shape[0]):
-            image_sum = None
-            for m in range(M):
-                if image_sum is None:
-                    image_sum = self.entropy(blocks[m][i,:])
-                else:
-                    image_sum += self.entropy(blocks[m][i,:])
-            sum1[i] = image_sum/M
-        # This might not work because sum1 is a list
+
+        sum1 = torch.zeros([len(blocks),1])
+        for m in range(len(blocks)):
+            entropies = torch.zeros([blocks[m].shape[0],1])
+            for t in range(blocks[m].shape[0]):
+                entropies[t] = self.entropy(blocks[m][t,:])
+            sum1[m] = torch.mean(entropies)
         L1 = torch.mean(sum1)
+
+        # Alternate implementation of MEL
+        #sum1 = torch.zeros([block_feats.shape[0],1])
+        #for t in range(block_feats.shape[0]):
+        #    image_sum = None
+        #    for m in range(M):
+        #        if image_sum is None:
+        #            image_sum = self.entropy(blocks[m][t,:])
+        #        else:
+        #            image_sum += self.entropy(blocks[m][t,:])
+        #    sum1[t] = image_sum/M
+        #L1 = torch.mean(sum1)
         
         #Batch Entropy Loss - For uniform support
         #  L2 = -Sum_block_m(Entropy(Sum_batch_i(block_i_m)/T))/M
@@ -52,10 +61,11 @@ class ClusterLoss(torch.nn.Module):
                 sum2 += self.entropy(block_mean)
         L2 = -1.0*sum2/M
 
-        L = L1.cuda() + self.lmbda*L2.cuda()
+        L = L1.cuda() + self.lmbda*L2.cuda()   # These losses probably aren't being computed on GPU
+        #L = self.lmbda*L2.cuda()   #lambda should be positive because there is already a -1.0 in L2
         #TODO
-        # 3. Use torch operations instead of for loops if you want to use multiple GPUs ???
-        return L
+        # 3. Use torch operations instead of for loops if you want to use multiple GPUs!
+        return L1, L2, L
 
 
 class LocalityLoss(torch.nn.Module):
@@ -87,10 +97,15 @@ class LocalityLoss(torch.nn.Module):
         # L2 -> bottom to top
         # L3 -> left to right
         # L4 -> right to left
+
+        #squared_feat_map = torch.mul(feat_map,feat_map)
         group_activity_1 = torch.zeros([feat_map.shape[0],feat_map.shape[2]]).cuda()
         #TODO
         # Does the .cuda() help or make sense?
         #  - It probably doesn't hurt
+        #TODO
+        # This might be very slow. Need to make it faster.
+        # Doesn't seem to be too slow
         for i in range(feat_map.shape[2]):
             group = feat_map[:,:,i:,:] 
             group_activity_1[:,i] = self.group_activity(group)
@@ -118,7 +133,7 @@ class LocalityLoss(torch.nn.Module):
         zeros = torch.empty_like(group_activity_4)
         L4 = torch.mean(F.pairwise_distance(group_activity_4,zeros,1))
 
-        tot_loss = (L1 + L2 + L3 + L4)/4.0
+        tot_loss = (L1.cuda() + L2.cuda() + L3.cuda() + L4.cuda())/4.0
         return tot_loss
 
 
