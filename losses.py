@@ -38,7 +38,7 @@ class ClusterLoss(torch.nn.Module):
             sum1[m] = torch.mean(entropies)
         L1 = torch.mean(sum1)
 
-        # Alternate implementation of MEL
+        # Alternate implementation of MEL - Is this wrong?
         #sum1 = torch.zeros([block_feats.shape[0],1])
         #for t in range(block_feats.shape[0]):
         #    image_sum = None
@@ -103,9 +103,7 @@ class LocalityLoss(torch.nn.Module):
         #TODO
         # Does the .cuda() help or make sense?
         #  - It probably doesn't hurt
-        #TODO
-        # This might be very slow. Need to make it faster.
-        # Doesn't seem to be too slow
+        # Try to make this faster
         for i in range(feat_map.shape[2]):
             group = feat_map[:,:,i:,:] 
             group_activity_1[:,i] = self.group_activity(group)

@@ -112,7 +112,8 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})'.format(epoch, j,
                       len(train_loader), cls_loss=losses_cls, loc_loss=losses_loc,
                       clust_loss=losses_clust, loss=total_losses, batch_time=batch_time))
-            print('MEL: {} | BEL: {}'.format(loss_2_MEL.item(),loss_2_BEL.item()))
+            if options['type'] in ['all', 'cls_clust']:
+                print('MEL: {} | BEL: {}'.format(loss_2_MEL.item(),loss_2_BEL.item()))
 
 
 def validate_model(val_loader, model, criterion):

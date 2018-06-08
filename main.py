@@ -44,7 +44,7 @@ def argparser():
     #TODO
     # Cross-validate the hyper-parameters to obtain the best values
     parser.add_argument('--lmbda', type=float, default=1.0)
-    parser.add_argument('--gamma_1', type=float, default=0.01)
+    parser.add_argument('--gamma_1', type=float, default=0.005)  # May need to increase gamma after some time
     parser.add_argument('--gamma_2', type=float, default=0.5)
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
