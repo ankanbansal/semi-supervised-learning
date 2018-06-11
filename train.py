@@ -72,14 +72,14 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
             # loss_1 has very high values in the initial few iterations. Might want to ignore these. 
             loss_1 = criterion_loc(feat_map)
             loss_2_MEL, loss_2_BEL, loss_2 = criterion_clust(block_logits)
-            loss = loss_0 + options['gamma_1']*loss_1 + options['gamma_2']*loss_2
+            loss = options['gamma_0']*loss_0 + options['gamma_1']*loss_1 + options['gamma_2']*loss_2
         elif options['type'] == 'cls_loc':
             loss_1 = criterion_loc(feat_map)
-            loss = loss_0 + options['gamma_1']*loss_1
+            loss = options['gamma_0']*loss_0 + options['gamma_1']*loss_1
             loss_2 = torch.Tensor([0.0])
         elif options['type'] == 'cls_clust':
             loss_2_MEL, loss_2_BEL, loss_2 = criterion_clust(block_logits)
-            loss = loss_0 + options['gamma_2']*loss_2
+            loss = options['gamma_0']*loss_0 + options['gamma_2']*loss_2
             loss_1 = torch.Tensor([0.0])
         else:
             loss = loss_0
@@ -116,7 +116,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                 print('MEL: {} | BEL: {}'.format(loss_2_MEL.item(),loss_2_BEL.item()))
 
 
-def validate_model(val_loader, model, criterion):
+def validate_model(val_loader, model, criterion, options):
     batch_time = AverageMeter()
     losses_cls = AverageMeter()
     top1 = AverageMeter()
@@ -127,44 +127,46 @@ def validate_model(val_loader, model, criterion):
     end = time.time()
     for j, data in enumerate(val_loader):
         target = data['label'].cuda(async=True)
-        input_img_var = Variable(data['image'].cuda(async=True), volatile=True)
-        target_var = Variable(target, volatile=True)
+        input_img_var = Variable(data['image'].cuda(async=True))
+        target_var = Variable(target)
 
         _, _, _, logits = model(input_img_var, options)
         loss = criterion(logits, target_var)
 
         prec1, prec5 = accuracy(logits.data, target, topK=(1,5))
-        losses.update(loss.data[0], data['image'].size(0))
+        losses_cls.update(loss.data[0], data['image'].size(0))
         top1.update(prec1[0],data['image'].size(0))
         top5.update(prec5[0],data['image'].size(0))
 
         batch_time.update(time.time() - end)
         end = time.time()
 
+        # Why is this printing prec only in multiples of 5?
         if j%options['print_freq'] == 0:
             print('Test: [{0}/{1}]\t'
                     'Time {batch_time.val:.3f} ({batch_time.avg:.3f}) | '
                     'Loss {loss.val:.4f} ({loss.avg:.4f}) | '
                     'Prec@1 {top1.val:.3f} ({top1.avg:.3f}) | '
                     'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                        i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1,
+                        j, len(val_loader), batch_time=batch_time, loss=losses_cls, top1=top1,
                         top5=top5))
     
     #print('*Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'.format(top1=top1, top5=top5))
     return top1.avg
 
 
-def accuracy(output, target, topk=(1,)):
+def accuracy(output, target, topK=(1,)):
     """Computes the precision@k for the specified values of k"""
-    maxk = max(topk)
+    maxk = max(topK)
     batch_size = target.size(0)
 
     _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
+    pred = pred.t() #transpose
+    correct = pred.eq(target.view(1, -1).expand_as(pred)) #element-wise equality
 
     res = []
-    for k in topk:
+    for k in topK:
         correct_k = correct[:k].view(-1).float().sum(0)
-        res.append(correct_k.mul_(100.0 / batch_size))
+        res.append(correct_k.mul_(100.0 / batch_size))  # This leads to prediction in multiples of 100.0/batch_size?
+                                                        # But why?
     return res

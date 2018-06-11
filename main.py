@@ -6,7 +6,6 @@ import argparse
 
 import models
 import dataLoader
-#from train import train_basic_model#, validate_model
 from train import train_wsod_model, validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
@@ -30,6 +29,7 @@ def argparser():
     parser.add_argument('--type', type=str, default='all',
             choices=['cls','cls_loc','cls_clust','all'])
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
+    parser.add_argument('--test_checkpoint', type=str, default=None, help='Enter filename.')
     parser.add_argument('--batch_size', type=int, default=140)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--train_json_file', type=str, default='./Data/train_whole_1.json')
@@ -38,12 +38,14 @@ def argparser():
     parser.add_argument('--train_img_dir', type=str,
             default='/efs/data/imagenet/train/')
 #            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
-    parser.add_argument('--val_img_dir', type=str, default='')
+    parser.add_argument('--val_img_dir', type=str, default='/efs/data/imagenet/val/')
+    parser.add_argument('--save_dir', type=str, default='./checkpoints/')
     parser.add_argument('--num_blocks', type=int, default=8)
     parser.add_argument('--block_size', type=int, default=64)
     #TODO
     # Cross-validate the hyper-parameters to obtain the best values
     parser.add_argument('--lmbda', type=float, default=1.0)
+    parser.add_argument('--gamma_0', type=float, default=1.0)
     parser.add_argument('--gamma_1', type=float, default=0.005)  # May need to increase gamma after some time
     parser.add_argument('--gamma_2', type=float, default=0.5)
     parser.add_argument('--learning_rate', type=float, default=0.1)
@@ -59,7 +61,6 @@ if __name__ == "__main__":
     options = argparser()
     best_avg_prec = 0.0
     is_best = False
-    writer = SummaryWriter(options['log_dir'])
     #model = models.BasicClassificationModel(options)
     model = models.WSODModel(options)
     criterion_cls = get_loss(options,loss_name='CE')
@@ -86,26 +87,36 @@ if __name__ == "__main__":
 
     optimizer = torch.optim.SGD(model.parameters(), options['learning_rate'])
 
-    print 'Start training...'
-    for epoch in range(options['start_epoch'], options['epochs']):
-        adjust_learning_rate(optimizer, epoch, options)
-        print 'Training for epoch:', epoch
 
-        #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-        train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
+    if options['mode'] == 'train':
+        writer = SummaryWriter(options['log_dir'])
+        print 'Start training...'
+        for epoch in range(options['start_epoch'], options['epochs']):
+            adjust_learning_rate(optimizer, epoch, options)
+            print 'Training for epoch:', epoch
 
-        # Validate
-        if options['val_on']:
-            avg_prec = validate_model(val_loader, model, criterion_cls)
-            is_best = avg_prec > best_avg_prec
-            if is_best:
-                print 'Best model till now: ', epoch
-            best_avg_prec = max(avg_prec,best_avg_prec)
+            #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
+            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
-        save_checkpoint({'epoch': epoch+1,
-                         'base_arch': options['base_arch'],
-                         'state_dict': model.state_dict(),
-                         'best_avg_prec': best_avg_prec},
-                        filename = 'checkpoints/checkpoint_{}_epoch_{}.pth.tar'.format(options['type'],epoch),
-                        is_best=is_best)
-    writer.close()
+            # Validate
+            if options['val_on']:
+                avg_prec = validate_model(val_loader, model, criterion_cls)
+                is_best = avg_prec > best_avg_prec
+                if is_best:
+                    print 'Best model till now: ', epoch
+                best_avg_prec = max(avg_prec,best_avg_prec)
+
+            save_checkpoint({'epoch': epoch+1,
+                             'base_arch': options['base_arch'],
+                             'state_dict': model.state_dict(),
+                             'best_avg_prec': best_avg_prec},
+                            filename = options['save_dir'] + 'checkpoint_{}_epoch_{}.pth.tar'.format(options['type'],epoch),
+                            is_best=is_best)
+        writer.close()
+    else:
+        print 'Starting validate...'
+        print 'Loading checkpoint {} ...'.format(options['test_checkpoint'])
+        checkpoint = torch.load(options['test_checkpoint'])
+        model.load_state_dict(checkpoint['state_dict'])
+        prec1 = validate_model(val_loader, model, criterion_cls, options)
+        print 'Average Precision: ', prec1

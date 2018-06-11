@@ -83,7 +83,7 @@ def loaders(options):
                               shuffle=True,
                               num_workers=options['num_workers'])
 
-    if options['val_on']:
+    if options['val_on'] or options['mode'] in ['validate','test']:
         print "Creating validation dataset..."
         val_dataset = ImgDataset(val_file, options, transform=val_transform, validation=True)
         val_loader = DataLoader(val_dataset,

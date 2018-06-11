@@ -63,7 +63,8 @@ def save_checkpoint(state,filename='./checkpoints_temp/checkpoint.pth.tar',is_be
         shutil.copyfile(filename,'./checkpoints/model_best.pth.tar')
 
 def adjust_learning_rate(optimizer,epoch,model_options):
-    """Sets the lr to the initial lr decayed by 10 every 2 epochs"""
-    lr = model_options['learning_rate']*(0.1**(epoch//2))
+    """Sets the lr to the initial lr decayed by 10 every 5 epochs"""
+    lr = model_options['learning_rate']*(0.1**(epoch//5))
+    print 'Learning rate: ', lr
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr

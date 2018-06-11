@@ -60,6 +60,7 @@ class ClusterLoss(torch.nn.Module):
             else:
                 sum2 += self.entropy(block_mean)
         L2 = -1.0*sum2/M
+        #L2 = torch.Tensor([0.0])
 
         L = L1.cuda() + self.lmbda*L2.cuda()   # These losses probably aren't being computed on GPU
         #L = self.lmbda*L2.cuda()   #lambda should be positive because there is already a -1.0 in L2
@@ -81,7 +82,7 @@ class LocalityLoss(torch.nn.Module):
         # dimensions. This essentially keeps the batch_size same and vectorizes everything else
         #group_vec is now bs x num_pixels_in_group
         zeros = torch.empty_like(group_vec)
-        return F.pairwise_distance(group_vec, zeros, 2) # L2-norm
+        return F.pairwise_distance(group_vec, zeros, 2) # L2-norm # Do we have to specify dim?
     def forward(self, feat_map):
         """
         Input: feat_map -> T x (HxWxD)  # Where H is the height of the feature map, W is the width,
