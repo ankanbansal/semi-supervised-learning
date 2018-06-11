@@ -51,7 +51,8 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
     criterion_cls = criterion_list[0]
     criterion_loc = criterion_list[1]
-    criterion_clust = criterion_list[2]
+    criterion_MEL = criterion_list[2]
+    criterion_BEL = criterion_list[2]
 
     model.train()
 
@@ -60,7 +61,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(data['label'].cuda(async=True))
 
-        feat_map, lin_feats, block_logits, logits = model(input_img_var, options)
+        feat_map, logits, sm_output = model(input_img_var, options)
         #ipdb.set_trace()
         # TODO
         # For levels of unsupervision:
