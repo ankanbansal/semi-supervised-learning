@@ -46,13 +46,13 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
     batch_time = AverageMeter()
     losses_cls = AverageMeter()
     losses_loc = AverageMeter()
-    losses_clust = AverageMeter()
+    losses_MEL = AverageMeter()
+    losses_BEL = AverageMeter()
     total_losses = AverageMeter()
 
     criterion_cls = criterion_list[0]
     criterion_loc = criterion_list[1]
-    criterion_MEL = criterion_list[2]
-    criterion_BEL = criterion_list[2]
+    criterion_clust = criterion_list[2]
 
     model.train()
 
@@ -62,39 +62,21 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         target_var = Variable(data['label'].cuda(async=True))
 
         feat_map, logits, sm_output = model(input_img_var, options)
-        #ipdb.set_trace()
-        # TODO
-        # For levels of unsupervision:
-        # Modify criterion_cls to take care of missing labels. i.e. return a loss only for those
-        # instances which have a label available
         loss_0 = criterion_cls(logits, target_var)
-        if options['type'] == 'all':
-            #TODO
-            # loss_1 has very high values in the initial few iterations. Might want to ignore these. 
-            loss_1 = criterion_loc(feat_map)
-            loss_2_MEL, loss_2_BEL, loss_2 = criterion_clust(block_logits)
-            loss = options['gamma_0']*loss_0 + options['gamma_1']*loss_1 + options['gamma_2']*loss_2
-        elif options['type'] == 'cls_loc':
-            loss_1 = criterion_loc(feat_map)
-            loss = options['gamma_0']*loss_0 + options['gamma_1']*loss_1
-            loss_2 = torch.Tensor([0.0])
-        elif options['type'] == 'cls_clust':
-            loss_2_MEL, loss_2_BEL, loss_2 = criterion_clust(block_logits)
-            loss = options['gamma_0']*loss_0 + options['gamma_2']*loss_2
-            loss_1 = torch.Tensor([0.0])
-        else:
-            loss = loss_0
-            loss_1 = torch.Tensor([0.0])
-            loss_2 = torch.Tensor([0.0])
+        loss_1 = criterion_loc(feat_map)
+        loss_2, loss_3 = criterion_clust(logits)  # Make sure that you have to pass logits and not sm_output
+        loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
 
         summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/loc', loss_1.item(), epoch*len(train_loader) + j)
-        summary_writer.add_scalar('loss/clust', loss_2.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/BEL', loss_3.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
 
         losses_cls.update(loss_0.item())
         losses_loc.update(loss_1.item())
-        losses_clust.update(loss_2.item())
+        losses_MEL.update(loss_2.item())
+        losses_BEL.update(loss_3.item())
         total_losses.update(loss.item())
 
         optimizer.zero_grad()
@@ -108,13 +90,12 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Cls Loss {cls_loss.val:.4f} ({cls_loss.avg:.4f}) | '
                   'Loc Loss {loc_loss.val:.4f} ({loc_loss.avg:.4f}) | '
-                  'Clust Loss {clust_loss.val:.4f} ({clust_loss.avg:.4f}) | '
+                  'MEL Loss {MEL_loss.val:.4f} ({MEL_loss.avg:.4f}) | '
+                  'BEL Loss {BEL_loss.val:.4f} ({BEL_loss.avg:.4f}) | '
                   'Loss {loss.val:.4f} ({loss.avg:.4f}) | '
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})'.format(epoch, j,
                       len(train_loader), cls_loss=losses_cls, loc_loss=losses_loc,
-                      clust_loss=losses_clust, loss=total_losses, batch_time=batch_time))
-            if options['type'] in ['all', 'cls_clust']:
-                print('MEL: {} | BEL: {}'.format(loss_2_MEL.item(),loss_2_BEL.item()))
+                      MEL_loss=losses_MEL, BEL_loss=losses_BEL, loss=total_losses, batch_time=batch_time))
 
 
 def validate_model(val_loader, model, criterion, options):
@@ -131,7 +112,7 @@ def validate_model(val_loader, model, criterion, options):
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(target)
 
-        _, _, _, logits = model(input_img_var, options)
+        _, logits, _ = model(input_img_var, options)
         loss = criterion(logits, target_var)
 
         prec1, prec5 = accuracy(logits.data, target, topK=(1,5))
