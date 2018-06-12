@@ -31,10 +31,11 @@ def argparser():
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
     parser.add_argument('--test_checkpoint', type=str, default=None, help='Enter filename.')
     parser.add_argument('--batch_size', type=int, default=140)
+    parser.add_argument('--val_batch_size', type=int, default=20)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--train_json_file', type=str, default='./Data/train_whole_1.json')
     parser.add_argument('--val_on', type=bool, default=False)
-    parser.add_argument('--val_json_file', type=str, default='')
+    parser.add_argument('--val_json_file', type=str, default='./Data/val_whole.json')
     parser.add_argument('--train_img_dir', type=str,
             default='/efs/data/imagenet/train/')
 #            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
@@ -45,8 +46,8 @@ def argparser():
     #TODO
     # Cross-validate the hyper-parameters to obtain the best values
     parser.add_argument('--gamma', type=float, default=0.005)  # Multiplier for Loc Loss
-    parser.add_argument('--alpha', type=float, default=0.5)  # Multiplier for MEL
-    parser.add_argument('--beta', type=float, default=0.5)  # Multiplier for BEL
+    parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
+    parser.add_argument('--beta', type=float, default=2.0)  # Multiplier for BEL
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)
@@ -105,19 +106,22 @@ if __name__ == "__main__":
             options['beta'] = 0
         print 'Start training...'
         for epoch in range(options['start_epoch'], options['epochs']):
+
+            # Validate
+            if options['val_on']:
+                avg_prec = validate_model(val_loader, model, criterion_cls, options)
+                is_best = avg_prec > best_avg_prec
+                if is_best:
+                    print 'Best model till now: ', epoch
+                best_avg_prec = max(avg_prec,best_avg_prec)
+                writer.add_scalar('validation/prec1', avg_prec, epoch)
+
             adjust_learning_rate(optimizer, epoch, options)
             print 'Training for epoch:', epoch
 
             #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
             train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
-            # Validate
-            if options['val_on']:
-                avg_prec = validate_model(val_loader, model, criterion_cls)
-                is_best = avg_prec > best_avg_prec
-                if is_best:
-                    print 'Best model till now: ', epoch
-                best_avg_prec = max(avg_prec,best_avg_prec)
 
             save_checkpoint({'epoch': epoch+1,
                              'base_arch': options['base_arch'],

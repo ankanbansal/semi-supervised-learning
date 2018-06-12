@@ -87,7 +87,7 @@ def loaders(options):
         print "Creating validation dataset..."
         val_dataset = ImgDataset(val_file, options, transform=val_transform, validation=True)
         val_loader = DataLoader(val_dataset,
-                                batch_size=options['batch_size'],
+                                batch_size=options['val_batch_size'],
                                 num_workers=options['num_workers'])
     else:
         val_dataset = None
