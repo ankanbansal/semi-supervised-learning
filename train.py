@@ -7,6 +7,8 @@ import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+import torchvision.utils as tv_utils
+
 def train_basic_model(train_loader, model, criterion, optimizer, epoch, options):
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -72,6 +74,13 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/BEL', loss_3.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
+
+        # Add histogram for feature map
+        # Doesn't seem to work - Plots the exact same histograms every time across time and across runs
+        # It's better to see the Distributions tab instead. -> But need to figure out what it shows
+        #feat_map_numpy = feat_map.clone().cpu().data.numpy()
+        #summary_writer.add_histogram('histogram/feat_map', feat_map_numpy, epoch*len(train_loader) + j)  # Time almost doubles
+        #summary_writer.add_histogram('histogram/feat_map_0', feat_map_numpy[0,:,:,:], epoch*len(train_loader) + j)  # Time almost doubles
 
         losses_cls.update(loss_0.item())
         losses_loc.update(loss_1.item())
