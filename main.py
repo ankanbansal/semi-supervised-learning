@@ -22,6 +22,8 @@ from tensorboardX import SummaryWriter
 def argparser():
     parser = argparse.ArgumentParser(description='Weakly Supervised Object Detection')
     parser.add_argument('--log_dir', type=str, default='./logs/')
+    #TODO
+    # Choose densenet201 for the final implementation
     parser.add_argument('--base_arch', type=str, default='densenet161',
             choices=['densenet161','densenet169','densenet201','resnet152'], 
             help='Which model to use as the base architecture')
@@ -45,7 +47,7 @@ def argparser():
     parser.add_argument('--block_size', type=int, default=64)
     #TODO
     # Cross-validate the hyper-parameters to obtain the best values
-    parser.add_argument('--gamma', type=float, default=0.005)  # Multiplier for Loc Loss
+    parser.add_argument('--gamma', type=float, default=0.01)  # Multiplier for Loc Loss
     parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
     parser.add_argument('--beta', type=float, default=2.0)  # Multiplier for BEL
     parser.add_argument('--learning_rate', type=float, default=0.1)
