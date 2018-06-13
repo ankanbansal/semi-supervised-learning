@@ -9,6 +9,7 @@ from torch.autograd import Variable
 
 import torchvision.utils as tv_utils
 
+# Train a vanilla classification model
 def train_basic_model(train_loader, model, criterion, optimizer, epoch, options):
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -29,6 +30,7 @@ def train_basic_model(train_loader, model, criterion, optimizer, epoch, options)
 
         losses.update(loss.data[0])
 
+        # Optimization step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -44,6 +46,7 @@ def train_basic_model(train_loader, model, criterion, optimizer, epoch, options)
                       len(train_loader), loss=losses, batch_time=batch_time, data_time=data_time))
 
 
+# Train the complete model (With all the losses)
 def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, options, summary_writer):
     batch_time = AverageMeter()
     losses_cls = AverageMeter()
@@ -56,6 +59,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
     criterion_loc = criterion_list[1]
     criterion_clust = criterion_list[2]
 
+    # Set model to train mode
     model.train()
 
     end = time.time()
@@ -63,12 +67,14 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(data['label'].cuda(async=True))
 
+        # model returns feature map, logits, and probabilities after applying softmax on logits
         feat_map, logits, sm_output = model(input_img_var, options)
         loss_0 = criterion_cls(logits, target_var)
         loss_1 = criterion_loc(feat_map)
-        loss_2, loss_3 = criterion_clust(logits)  # Make sure that you have to pass logits and not sm_output
+        loss_2, loss_3 = criterion_clust(logits)
         loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
 
+        # Add to tensorboard summary event
         summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/loc', loss_1.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
@@ -76,7 +82,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
 
         # Add histogram for feature map
-        # Doesn't seem to work - Plots the exact same histograms every time across time and across runs
+        # Doesn't seem to work - Plots the same histograms every time across time and across runs
         # It's better to see the Distributions tab instead. -> But need to figure out what it shows
         #feat_map_numpy = feat_map.clone().cpu().data.numpy()
         #summary_writer.add_histogram('histogram/feat_map', feat_map_numpy, epoch*len(train_loader) + j)  # Time almost doubles
@@ -88,6 +94,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         losses_BEL.update(loss_3.item())
         total_losses.update(loss.item())
 
+        # Optimization step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()

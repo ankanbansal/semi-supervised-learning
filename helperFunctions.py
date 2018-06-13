@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import shutil
 
+# Generic Bounding Box class
 class BBox(object):
     def __init__(self,x1,y1,x2,y2):
         if x1>x2: x1,x2 = x2,x1
@@ -33,6 +34,7 @@ class BBox(object):
         return float(intersection_box.area())/float(self.unionArea(other))
 
 
+# Not working somehow. Don't have the enthu to figure out why
 class JsonProgress(object):
     def __init__(self):
         self.count = 0
@@ -62,9 +64,9 @@ def save_checkpoint(state,filename='./checkpoints_temp/checkpoint.pth.tar',is_be
     if is_best:
         shutil.copyfile(filename,'./checkpoints/model_best.pth.tar')
 
-def adjust_learning_rate(optimizer,epoch,model_options):
-    """Sets the lr to the initial lr decayed by 10 every 5 epochs"""
-    lr = model_options['learning_rate']*(0.1**(epoch//5))
+def adjust_learning_rate(optimizer,epoch,model_options,d):
+    """Sets the lr to the initial lr decayed by 10 every d epochs"""
+    lr = model_options['learning_rate']*(0.1**(epoch//d))
     print 'Learning rate: ', lr
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
