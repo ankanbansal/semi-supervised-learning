@@ -80,6 +80,7 @@ class WSODModel(nn.Module):
         return feat_map, logits, final_output
 
 
+# The following contains block-wise softmax on features. This is not needed
 #class IncorrectWSODModel(nn.Module):
 #    def __init__(self,options):
 #        super(WSODModel, self).__init__()

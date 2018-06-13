@@ -24,6 +24,9 @@ class ClusterLoss(torch.nn.Module):
         number of nodes per block. T is the batch size
         Output: L = MEL + BEL
         """
+        #TODO
+        # Make these more amenable to multi-GPU training
+
         #Mean Entropy Loss - For sparsity
         #  L1 = Sum_batch_i(Sum_block_m(Entropy(block_i_m)))/TM
         sum1 = torch.zeros([logits.shape[0],1])
@@ -39,7 +42,7 @@ class ClusterLoss(torch.nn.Module):
         return L1.cuda(), L2.cuda()
 
 
-
+# This loss contained loss in the case of block softmax. Not using this.
 #class IncorrectClusterLoss(torch.nn.Module):
 #    """
 #    Cluster loss is comes from the SuBiC paper and consists of two losses.
@@ -137,9 +140,7 @@ class LocalityLoss(torch.nn.Module):
         #squared_feat_map = torch.mul(feat_map,feat_map)
         group_activity_1 = torch.zeros([feat_map.shape[0],feat_map.shape[2]]).cuda()
         #TODO
-        # Does the .cuda() help or make sense?
-        #  - It probably doesn't hurt
-        # Try to make this faster
+        # Try to make this faster and more amenable to multi-GPU training.
         for i in range(feat_map.shape[2]):
             group = feat_map[:,:,i:,:] 
             group_activity_1[:,i] = self.group_activity(group)

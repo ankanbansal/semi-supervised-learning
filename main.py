@@ -45,11 +45,10 @@ def argparser():
     parser.add_argument('--save_dir', type=str, default='./checkpoints/')
     parser.add_argument('--num_blocks', type=int, default=8)
     parser.add_argument('--block_size', type=int, default=64)
-    #TODO
-    # Cross-validate the hyper-parameters to obtain the best values
     parser.add_argument('--gamma', type=float, default=0.01)  # Multiplier for Loc Loss
     parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
     parser.add_argument('--beta', type=float, default=2.0)  # Multiplier for BEL
+                                                            # May be make this 1.0 too
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)
@@ -65,13 +64,15 @@ if __name__ == "__main__":
     is_best = False
     #model = models.BasicClassificationModel(options)
     model = models.WSODModel(options)
-    criterion_cls = get_loss(loss_name='CE')
-    criterion_loc = get_loss(loss_name='LocalityLoss')
-    criterion_clust = get_loss(loss_name='ClusterLoss')
+    # The following return loss classes
+    criterion_cls = get_loss(loss_name='CE')  # Cross-entropy loss
+    criterion_loc = get_loss(loss_name='LocalityLoss')  # Group sparsity penalty
+    criterion_clust = get_loss(loss_name='ClusterLoss')  # MEL + BEL
 
     model = nn.DataParallel(model).cuda()
     torch.multiprocessing.set_sharing_strategy('file_system')
 
+    # Resume from checkpoint
     if options['resume']:
         if os.path.isfile(options['resume']):
             print 'Loading checkpoint {} ...'.format(options['resume'])
@@ -87,28 +88,39 @@ if __name__ == "__main__":
     train_loader, val_loader = dataLoader.loaders(options)
     print 'Created data loaders'
 
+    #TODO
+    # Add more options to the optimizer. See DenseNet training details from the paper.
+    # Mainly:
+    # momentum=0.9
+    # nesterov=True
+    # dampening=0.0
+    # weight_decay=0.0001
     optimizer = torch.optim.SGD(model.parameters(), options['learning_rate'])
-
 
     if options['mode'] == 'train':
         writer = SummaryWriter(options['log_dir'])
         if options['type'] == 'cls_clust':
+            # Use only classification and clustering (MEL + BEL)
             options['gamma'] = 0
         elif options['type'] == 'cls_loc':
+            # Use only classification and locality
             options['alpha'] = 0
             options['beta'] = 0
         elif options['type'] == 'cls':
+            # Use only classification
             options['gamma'] = 0
             options['alpha'] = 0
             options['beta'] = 0
         elif options['type'] == 'cls_MEL':
+            # Use only classification and MEL
             options['gamma'] = 0
             options['beta'] = 0
         elif options['type'] == 'cls_MEL_loc':
+            # Use classification, MEL, and locality
             options['beta'] = 0
+
         print 'Start training...'
         for epoch in range(options['start_epoch'], options['epochs']):
-
             # Validate
             if options['val_on']:
                 avg_prec = validate_model(val_loader, model, criterion_cls, options)
@@ -118,19 +130,25 @@ if __name__ == "__main__":
                 best_avg_prec = max(avg_prec,best_avg_prec)
                 writer.add_scalar('validation/prec1', avg_prec, epoch)
 
-            adjust_learning_rate(optimizer, epoch, options)
-            print 'Training for epoch:', epoch
-
-            #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
-
-
+            print 'Saving checkpoint after ', epoch, ' epochs...'
             save_checkpoint({'epoch': epoch+1,
                              'base_arch': options['base_arch'],
                              'state_dict': model.state_dict(),
                              'best_avg_prec': best_avg_prec},
                             filename = options['save_dir'] + 'checkpoint_{}_epoch_{}.pth.tar'.format(options['type'],epoch),
                             is_best=is_best)
+
+            # Adjust learning rate. Divide learning rate by 10 every d epochs.
+            d = 5
+            adjust_learning_rate(optimizer, epoch, options, d)
+            #TODO
+            # Can also look into torch.optim.lr_scheduler and
+            # torch.optim.lr_scheduler.ReduceLROnPlateau
+
+            print 'Training for epoch:', epoch
+            #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
+            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
+
         writer.close()
     else:
         print 'Starting validate...'
