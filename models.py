@@ -63,10 +63,10 @@ class WSODModel(nn.Module):
 
     def forward(self, img, options):
         #TODO
-        # Might want to impose locality on some other feature map or after ReLU
-        feat_map = self.features(img) # Note that this is before the ReLU
-        f = F.relu(feat_map,inplace=True)
-        lin_feat = F.avg_pool2d(f, kernel_size=7, stride=1).view(f.size(0),-1)  # First 1-D feature
+        # Might want to impose locality on some other feature map
+        feat_map = self.features(img) 
+        feat_map_relu = F.relu(feat_map,inplace=True)
+        lin_feat = F.avg_pool2d(feat_map_relu, kernel_size=7, stride=1).view(feat_map_relu.size(0),-1)  # First 1-D feature
         logits = self.classifier(lin_feat)
         if options['mode'] == 'train':
             # softmax
@@ -77,7 +77,8 @@ class WSODModel(nn.Module):
             final_output = torch.zeros([logits.shape[0],logits.shape[1]]) # bs x C
             for j in range(final_output.shape[0]):
                 final_output[j,max_ind[j]] = 1.0
-        return feat_map, logits, final_output
+        #return feat_map, logits, final_output
+        return feat_map_relu, logits, final_output
 
 
 # The following contains block-wise softmax on features. This is not needed
