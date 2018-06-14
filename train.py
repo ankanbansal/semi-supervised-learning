@@ -53,11 +53,14 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
     losses_loc = AverageMeter()
     losses_MEL = AverageMeter()
     losses_BEL = AverageMeter()
+    losses_LEL_MEL = AverageMeter()
+    losses_LEL_BEL = AverageMeter()
     total_losses = AverageMeter()
 
     criterion_cls = criterion_list[0]
     criterion_loc = criterion_list[1]
     criterion_clust = criterion_list[2]
+    criterion_loc_ent = criterion_list[3]
 
     # Set model to train mode
     model.train()
@@ -69,16 +72,23 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
         # model returns feature map, logits, and probabilities after applying softmax on logits
         feat_map, logits, sm_output = model(input_img_var, options)
+
         loss_0 = criterion_cls(logits, target_var)
         loss_1 = criterion_loc(feat_map)
         loss_2, loss_3 = criterion_clust(logits)
-        loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
+        loss_4, loss_5 = criterion_loc_ent(feat_map)
+
+        loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3 \
+            + options['nu']*loss_4 + options['mu']*loss_5
+        #loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
 
         # Add to tensorboard summary event
         summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/loc', loss_1.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/BEL', loss_3.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/LEL_MEL', loss_4.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/LEL_BEL', loss_5.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
 
         # Add histogram for feature map
@@ -92,6 +102,8 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         losses_loc.update(loss_1.item())
         losses_MEL.update(loss_2.item())
         losses_BEL.update(loss_3.item())
+        losses_LEL_MEL.update(loss_4.item())
+        losses_LEL_BEL.update(loss_5.item())
         total_losses.update(loss.item())
 
         # Optimization step
@@ -108,10 +120,13 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                   'Loc Loss {loc_loss.val:.4f} ({loc_loss.avg:.4f}) | '
                   'MEL Loss {MEL_loss.val:.4f} ({MEL_loss.avg:.4f}) | '
                   'BEL Loss {BEL_loss.val:.4f} ({BEL_loss.avg:.4f}) | '
+                  'LEL_MEL Loss {LEL_MEL_loss.val:.4f} ({LEL_MEL_loss.avg:.4f}) | '
+                  'LEL_BEL Loss {LEL_BEL_loss.val:.4f} ({LEL_BEL_loss.avg:.4f}) | '
                   'Loss {loss.val:.4f} ({loss.avg:.4f}) | '
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})'.format(epoch, j,
                       len(train_loader), cls_loss=losses_cls, loc_loss=losses_loc,
-                      MEL_loss=losses_MEL, BEL_loss=losses_BEL, loss=total_losses, batch_time=batch_time))
+                      MEL_loss=losses_MEL, BEL_loss=losses_BEL, LEL_MEL_loss=losses_LEL_MEL,
+                      LEL_BEL_loss=losses_LEL_BEL, loss=total_losses, batch_time=batch_time))
 
 
 def validate_model(val_loader, model, criterion, options):

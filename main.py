@@ -29,7 +29,8 @@ def argparser():
             help='Which model to use as the base architecture')
     parser.add_argument('--mode', type=str, default='train', choices=['train','test','validate'])
     parser.add_argument('--type', type=str, default='all',
-            choices=['cls','cls_loc','cls_clust','all', 'cls_MEL', 'cls_MEL_loc'])
+            choices=['cls','cls_loc','cls_clust','all', 'cls_MEL', 'cls_MEL_loc', 'cls_MEL_LELMEL',
+                'cls_MEL_LEL', 'cls_clust_LELMEL', 'cls_clust_LEL'])
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
     parser.add_argument('--test_checkpoint', type=str, default=None, help='Enter filename.')
     parser.add_argument('--batch_size', type=int, default=140)
@@ -49,6 +50,8 @@ def argparser():
     parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
     parser.add_argument('--beta', type=float, default=2.0)  # Multiplier for BEL
                                                             # May be make this 1.0 too
+    parser.add_argument('--nu', type=float, default=1.0)  # Multiplier for LEL_MEL
+    parser.add_argument('--mu', type=float, default=2.0)  # Multiplier for LEL_BEL
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=20)
@@ -68,6 +71,7 @@ if __name__ == "__main__":
     criterion_cls = get_loss(loss_name='CE')  # Cross-entropy loss
     criterion_loc = get_loss(loss_name='LocalityLoss')  # Group sparsity penalty
     criterion_clust = get_loss(loss_name='ClusterLoss')  # MEL + BEL
+    criterion_loc_ent = get_loss(loss_name='LEL')  # Entropy type loss for locality
 
     model = nn.DataParallel(model).cuda()
     torch.multiprocessing.set_sharing_strategy('file_system')
@@ -102,22 +106,45 @@ if __name__ == "__main__":
         if options['type'] == 'cls_clust':
             # Use only classification and clustering (MEL + BEL)
             options['gamma'] = 0
+            options['nu'] = 0
+            options['mu'] = 0
         elif options['type'] == 'cls_loc':
             # Use only classification and locality
             options['alpha'] = 0
             options['beta'] = 0
+            options['nu'] = 0
+            options['mu'] = 0
         elif options['type'] == 'cls':
             # Use only classification
             options['gamma'] = 0
             options['alpha'] = 0
             options['beta'] = 0
+            options['nu'] = 0
+            options['mu'] = 0
         elif options['type'] == 'cls_MEL':
             # Use only classification and MEL
             options['gamma'] = 0
             options['beta'] = 0
+            options['nu'] = 0
+            options['mu'] = 0
         elif options['type'] == 'cls_MEL_loc':
             # Use classification, MEL, and locality
             options['beta'] = 0
+            options['nu'] = 0
+            options['mu'] = 0
+        elif options['type'] == 'cls_MEL_LELMEL':
+            options['beta'] = 0
+            options['gamma'] = 0
+            options['mu'] = 0
+        elif options['type'] == 'cls_MEL_LEL':
+            options['beta'] = 0
+            options['gamma'] = 0
+        elif options['type'] == 'cls_clust_LELMEL':
+            options['gamma'] = 0
+            options['mu'] = 0
+        elif options['type'] == 'cls_clust_LEL':
+            options['gamma'] = 0
+
 
         print 'Start training...'
         for epoch in range(options['start_epoch'], options['epochs']):
@@ -147,7 +174,7 @@ if __name__ == "__main__":
 
             print 'Training for epoch:', epoch
             #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
+            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust,criterion_loc_ent],optimizer,epoch,options,writer)
 
         writer.close()
     else:
