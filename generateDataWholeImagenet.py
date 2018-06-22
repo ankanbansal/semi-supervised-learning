@@ -24,7 +24,7 @@ if __name__ == "__main__":
     label_dict = json.load(open(options['label_dict_file']))
     if options['img_set'] == 'train':
         options['file_list'] = os.path.join(options['img_set_dir'], 'imagenet_train.lst')
-        options['save_file'] = os.path.join('./Data/', 'train_whole_' + str(options['ratio']) + '.json')
+        options['save_file'] = os.path.join('./Data/only_annotated/', 'train_whole_' + str(options['ratio']) + '.json')
     elif options['img_set'] == 'val':
         options['file_list'] = os.path.join(options['img_set_dir'], 'imagenet_val.lst')
         options['save_file'] = os.path.join('./Data/', 'val_whole.json')
@@ -51,9 +51,10 @@ if __name__ == "__main__":
                     img['label'] = labels[k]
                 else:
                     ipdb.set_trace()
+                all_images.append(img)
             else:
                 img['label'] = -1000
-            all_images.append(img)
+            #all_images.append(img)
         json.dump(all_images,open(options['save_file'],'w'))
     else:
         all_images = []

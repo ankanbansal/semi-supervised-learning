@@ -29,15 +29,16 @@ def argparser():
             help='Which model to use as the base architecture')
     parser.add_argument('--mode', type=str, default='train', choices=['train','test','validate'])
     parser.add_argument('--type', type=str, default='all',
-            choices=['cls','cls_loc','cls_clust','all', 'cls_MEL', 'cls_MEL_loc', 'cls_MEL_LELMEL',
+            choices=['cls','cls_loc','cls_clust','all', 'cls_MEL', 'cls_BEL', 'cls_MEL_loc', 'cls_MEL_LELMEL',
                 'cls_MEL_LEL', 'cls_clust_LELMEL', 'cls_clust_LEL'])
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
     parser.add_argument('--test_checkpoint', type=str, default=None, help='Enter filename.')
     parser.add_argument('--batch_size', type=int, default=140)
     parser.add_argument('--val_batch_size', type=int, default=20)
     parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--train_json_file', type=str, default='./Data/train_whole_1.json')
+    parser.add_argument('--train_json_file', type=str, default='./Data/only_annotated/train_whole_10.json')
     parser.add_argument('--val_on', type=bool, default=False)
+    parser.add_argument('--hist_on', type=bool, default=False)
     parser.add_argument('--val_json_file', type=str, default='./Data/val_whole.json')
     parser.add_argument('--train_img_dir', type=str,
             default='/efs/data/imagenet/train/')
@@ -54,7 +55,7 @@ def argparser():
     parser.add_argument('--mu', type=float, default=2.0)  # Multiplier for LEL_BEL
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--start_epoch', type=int, default=0)
-    parser.add_argument('--epochs', type=int, default=20)
+    parser.add_argument('--epochs', type=int, default=90)
     parser.add_argument('--num_classes', type=int, default=1000)
     parser.add_argument('--print_freq', type=int, default=100)
 
@@ -71,7 +72,7 @@ if __name__ == "__main__":
     criterion_cls = get_loss(loss_name='CE')  # Cross-entropy loss
     criterion_loc = get_loss(loss_name='LocalityLoss')  # Group sparsity penalty
     criterion_clust = get_loss(loss_name='ClusterLoss')  # MEL + BEL
-    criterion_loc_ent = get_loss(loss_name='LEL')  # Entropy type loss for locality
+    #criterion_loc_ent = get_loss(loss_name='LEL')  # Entropy type loss for locality
 
     model = nn.DataParallel(model).cuda()
     torch.multiprocessing.set_sharing_strategy('file_system')
@@ -99,7 +100,8 @@ if __name__ == "__main__":
     # nesterov=True
     # dampening=0.0
     # weight_decay=0.0001
-    optimizer = torch.optim.SGD(model.parameters(), options['learning_rate'])
+    optimizer = torch.optim.SGD(model.parameters(), options['learning_rate'], nesterov=True,
+            momentum=0.9, dampening=0, weight_decay=0.0001)
 
     if options['mode'] == 'train':
         writer = SummaryWriter(options['log_dir'])
@@ -125,6 +127,12 @@ if __name__ == "__main__":
             # Use only classification and MEL
             options['gamma'] = 0
             options['beta'] = 0
+            options['nu'] = 0
+            options['mu'] = 0
+        elif options['type'] == 'cls_BEL':
+            # Use only classification and MEL
+            options['alpha'] = 0
+            options['gamma'] = 0
             options['nu'] = 0
             options['mu'] = 0
         elif options['type'] == 'cls_MEL_loc':
@@ -154,19 +162,19 @@ if __name__ == "__main__":
                 is_best = avg_prec > best_avg_prec
                 if is_best:
                     print 'Best model till now: ', epoch
-                best_avg_prec = max(avg_prec,best_avg_prec)
-                writer.add_scalar('validation/prec1', avg_prec, epoch)
+                    best_avg_prec = max(avg_prec,best_avg_prec)
+                    writer.add_scalar('validation/prec1', avg_prec, epoch)
 
-            print 'Saving checkpoint after ', epoch, ' epochs...'
-            save_checkpoint({'epoch': epoch+1,
-                             'base_arch': options['base_arch'],
-                             'state_dict': model.state_dict(),
-                             'best_avg_prec': best_avg_prec},
-                            filename = options['save_dir'] + 'checkpoint_{}_epoch_{}.pth.tar'.format(options['type'],epoch),
-                            is_best=is_best)
+                    print 'Saving checkpoint after ', epoch, ' epochs...'
+                    save_checkpoint({'epoch': epoch+1,
+                                     'base_arch': options['base_arch'],
+                                     'state_dict': model.state_dict(),
+                                     'best_avg_prec': best_avg_prec},
+                                    filename = options['save_dir'] + 'checkpoint_{}_epoch_{}.pth.tar'.format(options['type'],epoch),
+                                    is_best=is_best)
 
             # Adjust learning rate. Divide learning rate by 10 every d epochs.
-            d = 5
+            d = 20
             adjust_learning_rate(optimizer, epoch, options, d)
             #TODO
             # Can also look into torch.optim.lr_scheduler and
@@ -174,7 +182,7 @@ if __name__ == "__main__":
 
             print 'Training for epoch:', epoch
             #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust,criterion_loc_ent],optimizer,epoch,options,writer)
+            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
         writer.close()
     else:

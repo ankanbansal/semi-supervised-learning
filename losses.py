@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import ipdb
+
 
 class ClusterLoss(torch.nn.Module):
     """
@@ -54,7 +56,8 @@ class LocalityLoss(torch.nn.Module):
         group_vec = group.contiguous().view(group.size(0),-1)  # The size -1 is inferred from the other
         # dimensions. This essentially keeps the batch_size same and vectorizes everything else
         #group_vec is now bs x num_pixels_in_group
-        zeros = torch.empty_like(group_vec)
+        #zeros = torch.empty_like(group_vec)
+        zeros = torch.zeros([group_vec.shape[0],group_vec.shape[1]]).cuda()
         return F.pairwise_distance(group_vec, zeros, 2) # L2-norm # Do we have to specify dim?
     def forward(self, feat_map):
         """
@@ -79,32 +82,33 @@ class LocalityLoss(torch.nn.Module):
         for i in range(feat_map.shape[2]):
             group = feat_map[:,:,i:,:] 
             group_activity_1[:,i] = self.group_activity(group)
-        zeros = torch.empty_like(group_activity_1)
+        #zeros = torch.empty_like(group_activity_1)
+        zeros = torch.zeros([group_activity_1.shape[0],group_activity_1.shape[1]]).cuda()
         L1 = torch.mean(F.pairwise_distance(group_activity_1,zeros,1))   # L1-norm
 
         group_activity_2 = torch.zeros([feat_map.shape[0],feat_map.shape[2]]).cuda()
         for j in reversed(range(feat_map.shape[2])):
             group = feat_map[:,:,:j+1,:]
             group_activity_2[:,j] = self.group_activity(group)
-        zeros = torch.empty_like(group_activity_2)
+        #zeros = torch.empty_like(group_activity_2)
         L2 = torch.mean(F.pairwise_distance(group_activity_2,zeros,1)) 
 
         group_activity_3 = torch.zeros([feat_map.shape[0],feat_map.shape[3]]).cuda()
         for k in range(feat_map.shape[3]):
             group = feat_map[:,:,:,k:]
             group_activity_3[:,k] = self.group_activity(group)
-        zeros = torch.empty_like(group_activity_3)
+        #zeros = torch.empty_like(group_activity_3)
         L3 = torch.mean(F.pairwise_distance(group_activity_3,zeros,1)) 
 
         group_activity_4 = torch.zeros([feat_map.shape[0],feat_map.shape[3]]).cuda()
         for l in reversed(range(feat_map.shape[3])):
             group = feat_map[:,:,:,:l+1]
             group_activity_4[:,l] = self.group_activity(group)
-        zeros = torch.empty_like(group_activity_4)
+        #zeros = torch.empty_like(group_activity_4)
         L4 = torch.mean(F.pairwise_distance(group_activity_4,zeros,1))
 
         tot_loss = (L1.cuda() + L2.cuda() + L3.cuda() + L4.cuda())/4.0
-        return tot_loss
+        return tot_loss, torch.log10(group_activity_1), torch.log10(group_activity_2), torch.log10(group_activity_3), torch.log10(group_activity_4)
 
 
 class LocalityEntropyLoss(torch.nn.Module):

@@ -53,14 +53,14 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
     losses_loc = AverageMeter()
     losses_MEL = AverageMeter()
     losses_BEL = AverageMeter()
-    losses_LEL_MEL = AverageMeter()
-    losses_LEL_BEL = AverageMeter()
+    #losses_LEL_MEL = AverageMeter()
+    #losses_LEL_BEL = AverageMeter()
     total_losses = AverageMeter()
 
     criterion_cls = criterion_list[0]
     criterion_loc = criterion_list[1]
     criterion_clust = criterion_list[2]
-    criterion_loc_ent = criterion_list[3]
+    #criterion_loc_ent = criterion_list[3]
 
     # Set model to train mode
     model.train()
@@ -74,36 +74,71 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         feat_map, logits, sm_output = model(input_img_var, options)
 
         loss_0 = criterion_cls(logits, target_var)
-        loss_1 = criterion_loc(feat_map)
+        loss_1, g1, g2, g3, g4 = criterion_loc(feat_map)
+        #loss_1 = criterion_loc(feat_map)
+        # activation decrease in g1 and g3
+        # increase in g2 and g4
         loss_2, loss_3 = criterion_clust(logits)
-        loss_4, loss_5 = criterion_loc_ent(feat_map)
+        #loss_4, loss_5 = criterion_loc_ent(feat_map)
 
-        loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3 \
-            + options['nu']*loss_4 + options['mu']*loss_5
-        #loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
+        #loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3 \
+        #    + options['nu']*loss_4 + options['mu']*loss_5
+        loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
 
         # Add to tensorboard summary event
         summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/loc', loss_1.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/BEL', loss_3.item(), epoch*len(train_loader) + j)
-        summary_writer.add_scalar('loss/LEL_MEL', loss_4.item(), epoch*len(train_loader) + j)
-        summary_writer.add_scalar('loss/LEL_BEL', loss_5.item(), epoch*len(train_loader) + j)
+        #summary_writer.add_scalar('loss/LEL_MEL', loss_4.item(), epoch*len(train_loader) + j)
+        #summary_writer.add_scalar('loss/LEL_BEL', loss_5.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
 
-        # Add histogram for feature map
-        # Doesn't seem to work - Plots the same histograms every time across time and across runs
-        # It's better to see the Distributions tab instead. -> But need to figure out what it shows
-        #feat_map_numpy = feat_map.clone().cpu().data.numpy()
-        #summary_writer.add_histogram('histogram/feat_map', feat_map_numpy, epoch*len(train_loader) + j)  # Time almost doubles
-        #summary_writer.add_histogram('histogram/feat_map_0', feat_map_numpy[0,:,:,:], epoch*len(train_loader) + j)  # Time almost doubles
+        if options['hist_on'] and j%100==0:
+            # Add histogram of the group activations        
+            summary_writer.add_histogram('histogram/g1', g1.clone().cpu().data.numpy(),
+                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+            summary_writer.add_histogram('histogram/g2', g2.clone().cpu().data.numpy(),
+                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+            summary_writer.add_histogram('histogram/g3', g3.clone().cpu().data.numpy(),
+                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+            summary_writer.add_histogram('histogram/g4', g4.clone().cpu().data.numpy(),
+                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+
+            # Add scalar for area
+            thresh = -5
+            thresholded_g1 = (g1>thresh).cpu().numpy()
+            thresholded_g2 = (g2>thresh).cpu().numpy()
+            thresholded_g3 = (g3>thresh).cpu().numpy()
+            thresholded_g4 = (g4>thresh).cpu().numpy()
+
+            heights = torch.zeros([g1.shape[0],1])
+            widths = torch.zeros([g1.shape[0],1])
+            areas = torch.zeros([g1.shape[0],1])
+            for s in range(g1.shape[0]):
+                x0 = feat_map.shape[2] - next((i for i,x in enumerate(np.flip(thresholded_g1[s,:],0)) if x), 0)
+                x1 = next((i for i,x in enumerate(thresholded_g2[s,:]) if x), 0)
+                widths[s] = abs(x0 - x1)
+                y0 = feat_map.shape[3] - next((i for i,x in enumerate(np.flip(thresholded_g3[s,:],0)) if x), 0)
+                y1 = next((i for i,x in enumerate(thresholded_g4[s,:]) if x), 0)
+                heights[s] = abs(y0 - y1)
+                areas[s] = widths[s]*heights[s]
+
+            average_area = torch.mean(areas)
+            summary_writer.add_scalar('average_area/feature_map', average_area.item(), epoch*len(train_loader) + j)
+
+            if j%1000 == 0:
+                avg_feat_map = torch.mean(feat_map,dim=1,keepdim=True)
+                x = tv_utils.make_grid(avg_feat_map, normalize=True, scale_each=True)
+                summary_writer.add_image('Image',x,epoch*len(train_loader) + j)
+
 
         losses_cls.update(loss_0.item())
         losses_loc.update(loss_1.item())
         losses_MEL.update(loss_2.item())
         losses_BEL.update(loss_3.item())
-        losses_LEL_MEL.update(loss_4.item())
-        losses_LEL_BEL.update(loss_5.item())
+        #losses_LEL_MEL.update(loss_4.item())
+        #losses_LEL_BEL.update(loss_5.item())
         total_losses.update(loss.item())
 
         # Optimization step
@@ -120,13 +155,11 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                   'Loc Loss {loc_loss.val:.4f} ({loc_loss.avg:.4f}) | '
                   'MEL Loss {MEL_loss.val:.4f} ({MEL_loss.avg:.4f}) | '
                   'BEL Loss {BEL_loss.val:.4f} ({BEL_loss.avg:.4f}) | '
-                  'LEL_MEL Loss {LEL_MEL_loss.val:.4f} ({LEL_MEL_loss.avg:.4f}) | '
-                  'LEL_BEL Loss {LEL_BEL_loss.val:.4f} ({LEL_BEL_loss.avg:.4f}) | '
                   'Loss {loss.val:.4f} ({loss.avg:.4f}) | '
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})'.format(epoch, j,
                       len(train_loader), cls_loss=losses_cls, loc_loss=losses_loc,
-                      MEL_loss=losses_MEL, BEL_loss=losses_BEL, LEL_MEL_loss=losses_LEL_MEL,
-                      LEL_BEL_loss=losses_LEL_BEL, loss=total_losses, batch_time=batch_time))
+                      MEL_loss=losses_MEL, BEL_loss=losses_BEL, loss=total_losses,
+                      batch_time=batch_time))
 
 
 def validate_model(val_loader, model, criterion, options):
