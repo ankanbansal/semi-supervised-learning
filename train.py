@@ -132,7 +132,6 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                 x = tv_utils.make_grid(avg_feat_map, normalize=True, scale_each=True)
                 summary_writer.add_image('Image',x,epoch*len(train_loader) + j)
 
-
         losses_cls.update(loss_0.item())
         losses_loc.update(loss_1.item())
         losses_MEL.update(loss_2.item())

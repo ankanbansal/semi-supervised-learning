@@ -44,6 +44,71 @@ class ClusterLoss(torch.nn.Module):
         return L1.cuda(), L2.cuda()
 
 
+# This loss contained loss in the case of block softmax. Not using this.
+#class IncorrectClusterLoss(torch.nn.Module):
+#    """
+#    Cluster loss is comes from the SuBiC paper and consists of two losses.
+#    First is the Mean Entropy Loss which makes the block features to be close to one-hot encoded
+#    vectors.
+#    Second is the Batch Entropy Loss which ensures a uniform distribution o activations over the
+#    block features (Uniform block support). 
+#    """
+#    def __init__(self,options):
+#        super(ClusterLoss, self).__init__()
+#        self.num_blocks = options['num_blocks']
+#        self.lmbda = options['lmbda']
+#    def entropy(self, prob_dist):
+#        return -1.0*(F.softmax(prob_dist,dim=0)*F.log_softmax(prob_dist,dim=0)).sum()
+#    def forward(self, block_feats):
+#        """
+#        Input: block_feats -> T x (M*K)  # Where M is the number of blocks and K is the
+#        number of nodes per block. T is the batch size
+#        Output: L = MEL + BEL
+#        """
+#        M = self.num_blocks
+#        #Mean Entropy Loss - For sparsity
+#        #  L1 = Sum_batch_i(Sum_block_m(Entropy(block_i_m)))/TM
+#        blocks = torch.chunk(block_feats, M, dim=1)  # blocks contains M chunks. Each with shape TxK
+#
+#        sum1 = torch.zeros([len(blocks),1])
+#        for m in range(len(blocks)):
+#            entropies = torch.zeros([blocks[m].shape[0],1])
+#            for t in range(blocks[m].shape[0]):
+#                entropies[t] = self.entropy(blocks[m][t,:])
+#            sum1[m] = torch.mean(entropies)
+#        L1 = torch.mean(sum1)
+#
+#        # Alternate implementation of MEL - Is this wrong?
+#        #sum1 = torch.zeros([block_feats.shape[0],1])
+#        #for t in range(block_feats.shape[0]):
+#        #    image_sum = None
+#        #    for m in range(M):
+#        #        if image_sum is None:
+#        #            image_sum = self.entropy(blocks[m][t,:])
+#        #        else:
+#        #            image_sum += self.entropy(blocks[m][t,:])
+#        #    sum1[t] = image_sum/M
+#        #L1 = torch.mean(sum1)
+#        
+#        #Batch Entropy Loss - For uniform support
+#        #  L2 = -Sum_block_m(Entropy(Sum_batch_i(block_i_m)/T))/M
+#        sum2 = None
+#        for m in range(M):
+#            block_mean = torch.mean(blocks[m],dim=0)
+#            if sum2 is None:
+#                sum2 = self.entropy(block_mean)
+#            else:
+#                sum2 += self.entropy(block_mean)
+#        L2 = -1.0*sum2/M
+#        #L2 = torch.Tensor([0.0])
+#
+#        L = L1.cuda() + self.lmbda*L2.cuda()   # These losses probably aren't being computed on GPU
+#        #L = self.lmbda*L2.cuda()   #lambda should be positive because there is already a -1.0 in L2
+#        #TODO
+#        # 3. Use torch operations instead of for loops if you want to use multiple GPUs!
+#        return L1, L2, L
+
+
 class LocalityLoss(torch.nn.Module):
     """
     Enforces small activation regions
