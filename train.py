@@ -67,23 +67,36 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
     end = time.time()
     for j, data in enumerate(train_loader):
+        #t0 = time.time()
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(data['label'].cuda(async=True))
 
+        #t1 = time.time()
         # model returns feature map, logits, and probabilities after applying softmax on logits
         feat_map, logits, sm_output = model(input_img_var, options)
 
+
+        #weights = model.module.classifier.weight
+        #CAMs = 
+
+
+        #t2 = time.time()
+
         loss_0 = criterion_cls(logits, target_var)
+        #t3 = time.time()
         loss_1, g1, g2, g3, g4 = criterion_loc(feat_map)
+        #t4 = time.time()
         #loss_1 = criterion_loc(feat_map)
         # activation decrease in g1 and g3
         # increase in g2 and g4
         loss_2, loss_3 = criterion_clust(logits)
+        #t5 = time.time()
         #loss_4, loss_5 = criterion_loc_ent(feat_map)
 
         #loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3 \
         #    + options['nu']*loss_4 + options['mu']*loss_5
         loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
+        #t6 = time.time()
 
         # Add to tensorboard summary event
         summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
@@ -93,6 +106,8 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         #summary_writer.add_scalar('loss/LEL_MEL', loss_4.item(), epoch*len(train_loader) + j)
         #summary_writer.add_scalar('loss/LEL_BEL', loss_5.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
+
+        #t7 = time.time()
 
         if options['hist_on'] and j%100==0:
             # Add histogram of the group activations        
@@ -141,11 +156,15 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         total_losses.update(loss.item())
 
         # Optimization step
+        #t8 = time.time()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        #t9 = time.time()
 
         batch_time.update(time.time() - end)
+        #if batch_time.val > 2.0:
+        #    ipdb.set_trace()
         end = time.time()
        
         if j%options['print_freq'] == 0:
@@ -159,6 +178,8 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                       len(train_loader), cls_loss=losses_cls, loc_loss=losses_loc,
                       MEL_loss=losses_MEL, BEL_loss=losses_BEL, loss=total_losses,
                       batch_time=batch_time))
+
+        #t10 = time.time()
 
 
 def validate_model(val_loader, model, criterion, options):

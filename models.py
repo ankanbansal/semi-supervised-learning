@@ -43,9 +43,6 @@ class BasicClassificationModel(nn.Module):
 class WSODModel(nn.Module):
     def __init__(self,options):
         super(WSODModel, self).__init__()
-        self.num_blocks = options['num_blocks']
-        self.block_size = options['block_size']
-        self.num_classes = options['num_classes']
 
         arch = options['base_arch']
         if arch == 'densenet161':
@@ -66,6 +63,10 @@ class WSODModel(nn.Module):
         # Might want to impose locality on some other feature map
         feat_map = self.features(img) 
         feat_map_relu = F.relu(feat_map,inplace=True)
+        # For CAM:
+        # 1. Get the weights between lin_feat and logits
+        # 2. For each class c:
+        #       CAM = sum(w^c_i*feat_map_relu_i)
         lin_feat = F.avg_pool2d(feat_map_relu, kernel_size=7, stride=1).view(feat_map_relu.size(0),-1)  # First 1-D feature
         logits = self.classifier(lin_feat)
         if options['mode'] == 'train':

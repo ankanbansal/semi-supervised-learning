@@ -54,6 +54,7 @@ def argparser():
     parser.add_argument('--nu', type=float, default=1.0)  # Multiplier for LEL_MEL
     parser.add_argument('--mu', type=float, default=2.0)  # Multiplier for LEL_BEL
     parser.add_argument('--learning_rate', type=float, default=0.1)
+    parser.add_argument('--lr_step', type=int, default=20)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=90)
     parser.add_argument('--num_classes', type=int, default=1000)
@@ -174,7 +175,7 @@ if __name__ == "__main__":
                                     is_best=is_best)
 
             # Adjust learning rate. Divide learning rate by 10 every d epochs.
-            d = 20
+            d = options['lr_step']
             adjust_learning_rate(optimizer, epoch, options, d)
             #TODO
             # Can also look into torch.optim.lr_scheduler and
