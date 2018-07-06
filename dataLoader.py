@@ -3,6 +3,7 @@ import numpy as np
 import json
 import ipdb
 import socket
+import random
 
 from helperFunctions import JsonProgress
 
@@ -12,6 +13,7 @@ from sklearn.preprocessing import  MultiLabelBinarizer, OneHotEncoder
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import Sampler
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
@@ -64,7 +66,8 @@ class ImgDataset(Dataset):
             sample['image'] = Image.open(os.path.join(self.img_dir,sample['image_name'])).convert('RGB')
         except:
             print "Cannot load image: ", os.path.join(self.img_dir,sample['image_name'])
-            return None
+            return None   # This is not a good idea. Data loader will crash if some images are
+                          # absent. Need to make it robust to that case. 
         if self.transform:
             sample = self.transform(sample)
             return sample
@@ -92,4 +95,81 @@ def loaders(options):
     else:
         val_dataset = None
         val_loader = None
+    return train_loader, val_loader
+
+
+
+class WeightedBatchSampler(object):
+    def __init__(self, all_indices, sup_indices, unsup_indices, options):
+        self.all_indices = all_indices
+        self.batch_size = options['batch_size']
+        self.sup_indices = sup_indices
+        self.unsup_indices = unsup_indices
+        self.ratio = options['sup_to_total_ratio']
+    def __len__(self):
+        return len(self.all_indices) // self.batch_size
+    def __iter__(self):
+        num_batches = len(self.all_indices) // self.batch_size
+        while num_batches > 0:
+            batch = []
+            while len(batch) < self.batch_size:
+                if random.random() < self.ratio:
+                    batch.append(self.sup_indices[random.randint(0,len(self.sup_indices)-1)])
+                else:
+                    batch.append(self.unsup_indices[random.randint(0,len(self.unsup_indices)-1)])
+            if len(batch) == self.batch_size:
+                yield batch
+            num_batches -= 1
+
+
+class WeightedImgDataset(Dataset):
+    def __init__(self, all_files, options, transform=None):
+        print "Loading data file..."
+        self.all_files = all_files
+        self.transform = transform
+        self.img_dir = options['train_img_dir']
+    def __len__(self):
+        return len(self.all_files)
+    def __getitem__(self,idx):
+        sample = self.all_files[idx].copy()
+        try:
+            sample['image'] = Image.open(os.path.join(self.img_dir,sample['image_name'])).convert('RGB')
+        except:
+            print "Cannot load image: ", os.path.join(self.img_dir,sample['image_name'])
+            return None   # This is not a good idea. Data loader will crash if some images are
+                          # absent. Need to make it robust to that case. 
+        if self.transform:
+            sample = self.transform(sample)
+            return sample
+
+def weighted_loaders(options):
+    sup_file_name = options['sup_json_file']
+    sup_files = json.load(open(sup_file_name))
+    sup_indices = range(len(sup_files))
+    unsup_file_name = options['unsup_json_file']
+    unsup_files = json.load(open(unsup_file_name))
+    all_files = sup_files + unsup_files
+    unsup_indices = range(len(sup_files),len(all_files))
+
+    train_transform = TrainTransform()
+
+    print 'Creating train dataset...'
+    train_dataset = WeightedImgDataset(all_files, options, transform=train_transform)
+    sampler = WeightedBatchSampler(range(len(all_files)), sup_indices, unsup_indices, options)
+    train_loader = DataLoader(train_dataset,
+                              batch_sampler=sampler,
+                              num_workers=options['num_workers'])
+
+    val_file = options['val_json_file']
+    val_transform = ValTransform()
+    if options['val_on'] or options['mode'] in ['validate','test']:
+        print "Creating validation dataset..."
+        val_dataset = ImgDataset(val_file, options, transform=val_transform, validation=True)
+        val_loader = DataLoader(val_dataset,
+                                batch_size=options['val_batch_size'],
+                                num_workers=options['num_workers'])
+    else:
+        val_dataset = None
+        val_loader = None
+
     return train_loader, val_loader

@@ -31,22 +31,26 @@ def argparser():
     parser.add_argument('--type', type=str, default='all',
             choices=['cls','cls_loc','cls_clust','all', 'cls_MEL', 'cls_BEL', 'cls_MEL_loc', 'cls_MEL_LELMEL',
                 'cls_MEL_LEL', 'cls_clust_LELMEL', 'cls_clust_LEL'])
+    parser.add_argument('--CAM', type=bool, default=False)
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
     parser.add_argument('--test_checkpoint', type=str, default=None, help='Enter filename.')
     parser.add_argument('--batch_size', type=int, default=140)
     parser.add_argument('--val_batch_size', type=int, default=20)
     parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--train_json_file', type=str, default='./Data/only_annotated/train_whole_10.json')
+    parser.add_argument('--train_json_file', type=str, default='./Data/train_whole_sup_50k_tot_200k.json')
+    parser.add_argument('--sup_json_file', type=str, default='./Data/train_whole_sup_50k_tot_50k.json')
+    parser.add_argument('--unsup_json_file', type=str, default='./Data/train_whole_sup_0_tot_150k.json')
     parser.add_argument('--val_on', type=bool, default=False)
-    parser.add_argument('--hist_on', type=bool, default=False)
+    parser.add_argument('--hist_on', type=bool, default=True)
     parser.add_argument('--val_json_file', type=str, default='./Data/val_whole.json')
     parser.add_argument('--train_img_dir', type=str,
-            default='/efs/data/imagenet/train/')
+            default='/efs2/data/imagenet/train/')
 #            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
-    parser.add_argument('--val_img_dir', type=str, default='/efs/data/imagenet/val/')
+    parser.add_argument('--val_img_dir', type=str, default='/efs2/data/imagenet/val/')
     parser.add_argument('--save_dir', type=str, default='./checkpoints/')
-    parser.add_argument('--num_blocks', type=int, default=8)
-    parser.add_argument('--block_size', type=int, default=64)
+    #parser.add_argument('--num_blocks', type=int, default=8)
+    #parser.add_argument('--block_size', type=int, default=64)
+    parser.add_argument('--sup_to_total_ratio', type=float, default=0.25)
     parser.add_argument('--gamma', type=float, default=0.01)  # Multiplier for Loc Loss
     parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
     parser.add_argument('--beta', type=float, default=2.0)  # Multiplier for BEL
@@ -56,7 +60,7 @@ def argparser():
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--lr_step', type=int, default=20)
     parser.add_argument('--start_epoch', type=int, default=0)
-    parser.add_argument('--epochs', type=int, default=90)
+    parser.add_argument('--epochs', type=int, default=130)
     parser.add_argument('--num_classes', type=int, default=1000)
     parser.add_argument('--print_freq', type=int, default=100)
 
@@ -71,7 +75,10 @@ if __name__ == "__main__":
     model = models.WSODModel(options)
     # The following return loss classes
     criterion_cls = get_loss(loss_name='CE')  # Cross-entropy loss
-    criterion_loc = get_loss(loss_name='LocalityLoss')  # Group sparsity penalty
+    if options['CAM']:
+        criterion_loc = get_loss(loss_name='CAMLocalityLoss')  # Group sparsity penalty
+    else:
+        criterion_loc = get_loss(loss_name='LocalityLoss')  # Group sparsity penalty
     criterion_clust = get_loss(loss_name='ClusterLoss')  # MEL + BEL
     #criterion_loc_ent = get_loss(loss_name='LEL')  # Entropy type loss for locality
 
@@ -81,9 +88,11 @@ if __name__ == "__main__":
     # Resume from checkpoint
     if options['resume']:
         if os.path.isfile(options['resume']):
-            print 'Loading checkpoint {} ...'.format(options['resume'])
+            print 'Loading checkpoint {}...'.format(options['resume'])
             checkpoint = torch.load(options['resume'])
-            options['start_epoch'] = checkpoint['epoch']
+            #options['start_epoch'] = checkpoint['epoch']
+            options['start_epoch'] = 23
+            best_avg_prec = checkpoint['best_avg_prec']
             model.load_state_dict(checkpoint['state_dict'])
         else:
             print 'File {} does not exist'.format(options['resume'])
@@ -93,6 +102,8 @@ if __name__ == "__main__":
     print 'Creating data loaders...'
     train_loader, val_loader = dataLoader.loaders(options)
     print 'Created data loaders'
+
+    #ipdb.set_trace()
 
     #TODO
     # Add more options to the optimizer. See DenseNet training details from the paper.

@@ -61,8 +61,8 @@ class AverageMeter(object):
 
 def save_checkpoint(state,filename='./checkpoints_temp/checkpoint.pth.tar',is_best=False):
     torch.save(state,filename)
-    if is_best:
-        shutil.copyfile(filename,'./checkpoints/model_best.pth.tar')
+    #if is_best:
+    #    shutil.copyfile(filename,'./checkpoints/model_best.pth.tar')
 
 def adjust_learning_rate(optimizer,epoch,model_options,d):
     """Sets the lr to the initial lr decayed by 10 every d epochs"""

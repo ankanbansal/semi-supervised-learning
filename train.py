@@ -67,83 +67,93 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
     end = time.time()
     for j, data in enumerate(train_loader):
-        #t0 = time.time()
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(data['label'].cuda(async=True))
 
-        #t1 = time.time()
         # model returns feature map, logits, and probabilities after applying softmax on logits
         feat_map, logits, sm_output = model(input_img_var, options)
 
-
-        #weights = model.module.classifier.weight
-        #CAMs = 
-
-
-        #t2 = time.time()
-
+        # Calculate losses
         loss_0 = criterion_cls(logits, target_var)
-        #t3 = time.time()
-        loss_1, g1, g2, g3, g4 = criterion_loc(feat_map)
-        #t4 = time.time()
-        #loss_1 = criterion_loc(feat_map)
-        # activation decrease in g1 and g3
-        # increase in g2 and g4
-        loss_2, loss_3 = criterion_clust(logits)
-        #t5 = time.time()
-        #loss_4, loss_5 = criterion_loc_ent(feat_map)
 
-        #loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3 \
-        #    + options['nu']*loss_4 + options['mu']*loss_5
+        if options['CAM']:
+            #CAM - remember to change loss in main.py
+            weights = model.module.classifier.weight  # 1000x2208
+            weights2 = weights.unsqueeze(2).unsqueeze(3)  # 1000x2208x1x1 #Make weights 4-D
+            weights3 = weights2.repeat(1,1,feat_map.shape[2],feat_map.shape[3])  # 100x2208x7x7 # Repeat 
+            CAMs = torch.zeros([feat_map.shape[0],weights.shape[0],feat_map.shape[2],feat_map.shape[3]])
+            for im_ind in range(CAMs.shape[0]):
+                #CAMs[im_ind,:,:,:] = torch.mean(weights3*feat_map[im_ind], dim=1)
+                CAMs[im_ind,:,:,:] = torch.sum(weights3*feat_map[im_ind], dim=1)  # Should ideally also divide by the sum of weights
+            #Now apply locality loss on CAMs. On each class separately
+            loss_1, g1, g2, g3, g4 = criterion_loc(CAMs)
+        else:
+            #Loc loss on feature map
+            loss_1, g1, g2, g3, g4 = criterion_loc(feat_map)
+            # activation decrease in g1 and g3
+            # increase in g2 and g4
+
+        loss_2, loss_3 = criterion_clust(logits)
+
         loss = loss_0 + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
-        #t6 = time.time()
 
         # Add to tensorboard summary event
         summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/loc', loss_1.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/BEL', loss_3.item(), epoch*len(train_loader) + j)
-        #summary_writer.add_scalar('loss/LEL_MEL', loss_4.item(), epoch*len(train_loader) + j)
-        #summary_writer.add_scalar('loss/LEL_BEL', loss_5.item(), epoch*len(train_loader) + j)
         summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
 
-        #t7 = time.time()
-
-        if options['hist_on'] and j%100==0:
+        if options['hist_on'] and j%options['print_freq']==0:
             # Add histogram of the group activations        
-            summary_writer.add_histogram('histogram/g1', g1.clone().cpu().data.numpy(),
-                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
-            summary_writer.add_histogram('histogram/g2', g2.clone().cpu().data.numpy(),
-                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
-            summary_writer.add_histogram('histogram/g3', g3.clone().cpu().data.numpy(),
-                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
-            summary_writer.add_histogram('histogram/g4', g4.clone().cpu().data.numpy(),
-                    epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+            try:
+                t1 = time.time()
+                summary_writer.add_histogram('histogram/g1', g1.clone().cpu().data.numpy(),
+                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+                t2 = time.time()
+                summary_writer.add_histogram('histogram/g2', g2.clone().cpu().data.numpy(),
+                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+                t3 = time.time()
+                summary_writer.add_histogram('histogram/g3', g3.clone().cpu().data.numpy(),
+                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+                t4 = time.time()
+                summary_writer.add_histogram('histogram/g4', g4.clone().cpu().data.numpy(),
+                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
+                t5 = time.time()
+                if (t4-t3) > 5*(t2-t1):
+                    ipdb.set_trace()
+            except:
+                print 'Cannot write histograms'
+                ipdb.set_trace()
 
             # Add scalar for area
-            thresh = -5
-            thresholded_g1 = (g1>thresh).cpu().numpy()
-            thresholded_g2 = (g2>thresh).cpu().numpy()
-            thresholded_g3 = (g3>thresh).cpu().numpy()
-            thresholded_g4 = (g4>thresh).cpu().numpy()
+            #thresh = -5
+            #thresholded_g1 = (g1>thresh).cpu().numpy()
+            #thresholded_g2 = (g2>thresh).cpu().numpy()
+            #thresholded_g3 = (g3>thresh).cpu().numpy()
+            #thresholded_g4 = (g4>thresh).cpu().numpy()
 
-            heights = torch.zeros([g1.shape[0],1])
-            widths = torch.zeros([g1.shape[0],1])
-            areas = torch.zeros([g1.shape[0],1])
-            for s in range(g1.shape[0]):
-                x0 = feat_map.shape[2] - next((i for i,x in enumerate(np.flip(thresholded_g1[s,:],0)) if x), 0)
-                x1 = next((i for i,x in enumerate(thresholded_g2[s,:]) if x), 0)
-                widths[s] = abs(x0 - x1)
-                y0 = feat_map.shape[3] - next((i for i,x in enumerate(np.flip(thresholded_g3[s,:],0)) if x), 0)
-                y1 = next((i for i,x in enumerate(thresholded_g4[s,:]) if x), 0)
-                heights[s] = abs(y0 - y1)
-                areas[s] = widths[s]*heights[s]
+            #heights = torch.zeros([g1.shape[0],1])
+            #widths = torch.zeros([g1.shape[0],1])
+            #areas = torch.zeros([g1.shape[0],1])
+            #for s in range(g1.shape[0]):
+            #    x0 = feat_map.shape[2] - next((i for i,x in enumerate(np.flip(thresholded_g1[s,:],0)) if x), 0)
+            #    x1 = next((i for i,x in enumerate(thresholded_g2[s,:]) if x), 0)
+            #    widths[s] = abs(x0 - x1)
+            #    y0 = feat_map.shape[3] - next((i for i,x in enumerate(np.flip(thresholded_g3[s,:],0)) if x), 0)
+            #    y1 = next((i for i,x in enumerate(thresholded_g4[s,:]) if x), 0)
+            #    heights[s] = abs(y0 - y1)
+            #    areas[s] = widths[s]*heights[s]
+            #average_area = torch.mean(areas)
+            #summary_writer.add_scalar('average_area/feature_map', average_area.item(), epoch*len(train_loader) + j)
 
-            average_area = torch.mean(areas)
-            summary_writer.add_scalar('average_area/feature_map', average_area.item(), epoch*len(train_loader) + j)
-
-            if j%1000 == 0:
-                avg_feat_map = torch.mean(feat_map,dim=1,keepdim=True)
+            if j%(options['print_freq']*10) == 0:
+                #TODO
+                # Print CAMs instead of feat maps in case of CAMS
+                if options['CAM']:
+                    avg_feat_map = torch.mean(CAMs,dim=1,keepdim=True)
+                else:
+                    avg_feat_map = torch.mean(feat_map,dim=1,keepdim=True)
                 x = tv_utils.make_grid(avg_feat_map, normalize=True, scale_each=True)
                 summary_writer.add_image('Image',x,epoch*len(train_loader) + j)
 
@@ -156,11 +166,9 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         total_losses.update(loss.item())
 
         # Optimization step
-        #t8 = time.time()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        #t9 = time.time()
 
         batch_time.update(time.time() - end)
         #if batch_time.val > 2.0:
@@ -179,8 +187,6 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                       MEL_loss=losses_MEL, BEL_loss=losses_BEL, loss=total_losses,
                       batch_time=batch_time))
 
-        #t10 = time.time()
-
 
 def validate_model(val_loader, model, criterion, options):
     batch_time = AverageMeter()
@@ -197,6 +203,7 @@ def validate_model(val_loader, model, criterion, options):
         target_var = Variable(target)
 
         _, logits, _ = model(input_img_var, options)
+
         loss = criterion(logits, target_var)
 
         prec1, prec5 = accuracy(logits.data, target, topK=(1,5))
