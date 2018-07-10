@@ -30,7 +30,7 @@ def argparser():
     parser.add_argument('--mode', type=str, default='train', choices=['train','test','validate'])
     parser.add_argument('--type', type=str, default='all',
             choices=['cls','cls_loc','cls_clust','all', 'cls_MEL', 'cls_BEL', 'cls_MEL_loc', 'cls_MEL_LELMEL',
-                'cls_MEL_LEL', 'cls_clust_LELMEL', 'cls_clust_LEL'])
+                'cls_MEL_LEL', 'cls_clust_LELMEL', 'cls_clust_LEL','only_clust'])
     parser.add_argument('--CAM', type=bool, default=False)
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
     parser.add_argument('--test_checkpoint', type=str, default=None, help='Enter filename.')
@@ -48,8 +48,6 @@ def argparser():
 #            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
     parser.add_argument('--val_img_dir', type=str, default='/efs2/data/imagenet/val/')
     parser.add_argument('--save_dir', type=str, default='./checkpoints/')
-    #parser.add_argument('--num_blocks', type=int, default=8)
-    #parser.add_argument('--block_size', type=int, default=64)
     parser.add_argument('--sup_to_total_ratio', type=float, default=0.25)
     parser.add_argument('--gamma', type=float, default=0.01)  # Multiplier for Loc Loss
     parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
@@ -100,10 +98,8 @@ if __name__ == "__main__":
     cudnn.benchmark = True
 
     print 'Creating data loaders...'
-    train_loader, val_loader = dataLoader.loaders(options)
+    train_loader, val_loader = dataLoader.weighted_loaders(options)
     print 'Created data loaders'
-
-    #ipdb.set_trace()
 
     #TODO
     # Add more options to the optimizer. See DenseNet training details from the paper.
@@ -164,6 +160,10 @@ if __name__ == "__main__":
             options['mu'] = 0
         elif options['type'] == 'cls_clust_LEL':
             options['gamma'] = 0
+        elif options['type'] == 'only_clust':
+            options['gamma'] = 0
+            #TODO
+            # Make classification weight zero too
 
 
         print 'Start training...'
@@ -175,8 +175,6 @@ if __name__ == "__main__":
                 if is_best:
                     print 'Best model till now: ', epoch
                     best_avg_prec = max(avg_prec,best_avg_prec)
-                    writer.add_scalar('validation/prec1', avg_prec, epoch)
-
                     print 'Saving checkpoint after ', epoch, ' epochs...'
                     save_checkpoint({'epoch': epoch+1,
                                      'base_arch': options['base_arch'],
@@ -184,6 +182,7 @@ if __name__ == "__main__":
                                      'best_avg_prec': best_avg_prec},
                                     filename = options['save_dir'] + 'checkpoint_{}_epoch_{}.pth.tar'.format(options['type'],epoch),
                                     is_best=is_best)
+                writer.add_scalar('validation/prec1', avg_prec, epoch)
 
             # Adjust learning rate. Divide learning rate by 10 every d epochs.
             d = options['lr_step']

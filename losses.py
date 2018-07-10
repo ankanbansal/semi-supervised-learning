@@ -167,7 +167,7 @@ class CAMLocalityLoss(torch.nn.Module):
         torch.index_select(squared_cams_rows,2,torch.linspace(-1,-1*m,m).long() + m)
 
         lr_groups = (torch.cumsum(squared_cams_rows, dim=2) + 1e-20)**0.5  #TxCxW
-        L1 = torch.mean(torch.sum(torch.sum(lr_groups, dim=2), dim=1))
+        L1 = torch.mean(torch.sum(torch.sum(lr_groups, dim=2), dim=1))  #Try weighing with the class probability in the sum
 
         rl_groups = (torch.cumsum(reversed_squared_cams_rows, dim=2) + 1e-20)**0.5 
         L2 = torch.mean(torch.sum(torch.sum(rl_groups, dim=2), dim=1))
@@ -177,7 +177,7 @@ class CAMLocalityLoss(torch.nn.Module):
         reversed_squared_cams_cols =\
         torch.index_select(squared_cams_cols,2,torch.linspace(-1,-1*n,n).long() + n)
 
-        tb_groups = (torch.cumsum(squared_cams_cols, dim=2) + 1e-20)**0.5
+        tb_groups = (torch.cumsum(squared_cams_cols, dim=2) + 1e-20)**0.5  #TxCxH
         L3 = torch.mean(torch.sum(torch.sum(tb_groups, dim=2), dim=1))
 
         bt_groups = (torch.cumsum(reversed_squared_cams_cols, dim=2) + 1e-20)**0.5 
@@ -185,8 +185,8 @@ class CAMLocalityLoss(torch.nn.Module):
 
         tot_loss = L1.cuda() + L2.cuda() + L3.cuda() + L4.cuda() 
 
-        #return tot_loss, torch.log10(lr_groups + 0.00001), torch.log10(rl_groups + 0.00001), torch.log10(tb_groups + 0.00001), torch.log10(bt_groups + 0.00001)
-        return tot_loss, torch.mean(lr_groups,dim=1), torch.mean(rl_groups,dim=1), torch.mean(tb_groups,dim=1), torch.mean(bt_groups,dim=1)
+        return tot_loss, torch.mean(torch.log10(lr_groups + 0.00001),dim=1), torch.mean(torch.log10(rl_groups + 0.00001),dim=1), torch.mean(torch.log10(tb_groups + 0.00001),dim=1), torch.mean(torch.log10(bt_groups + 0.00001),dim=1)
+        #return tot_loss, torch.mean(lr_groups,dim=1), torch.mean(rl_groups,dim=1), torch.mean(tb_groups,dim=1), torch.mean(bt_groups,dim=1)
 
 
 #class LocalityEntropyLoss(torch.nn.Module):

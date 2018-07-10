@@ -54,7 +54,7 @@ if __name__ == "__main__":
                 all_images.append(img)
             else:
                 img['label'] = -1000
-                #if k%5 == 0:
+                #if k% 5 == 0:
                 #   all_images.append(img)
         json.dump(all_images,open(options['save_file'],'w'))
     else:

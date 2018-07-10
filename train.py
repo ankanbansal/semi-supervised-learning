@@ -72,6 +72,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
         # model returns feature map, logits, and probabilities after applying softmax on logits
         feat_map, logits, sm_output = model(input_img_var, options)
+        class_with_max_prob = torch.argmax(sm_output,dim=1)
 
         # Calculate losses
         loss_0 = criterion_cls(logits, target_var)
@@ -82,11 +83,14 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
             weights2 = weights.unsqueeze(2).unsqueeze(3)  # 1000x2208x1x1 #Make weights 4-D
             weights3 = weights2.repeat(1,1,feat_map.shape[2],feat_map.shape[3])  # 100x2208x7x7 # Repeat 
             CAMs = torch.zeros([feat_map.shape[0],weights.shape[0],feat_map.shape[2],feat_map.shape[3]])
+            CAMs_for_loss = torch.zeros([feat_map.shape[0],1,feat_map.shape[2],feat_map.shape[3]])
             for im_ind in range(CAMs.shape[0]):
                 #CAMs[im_ind,:,:,:] = torch.mean(weights3*feat_map[im_ind], dim=1)
                 CAMs[im_ind,:,:,:] = torch.sum(weights3*feat_map[im_ind], dim=1)  # Should ideally also divide by the sum of weights
+                CAMs_for_loss[im_ind,:,:,:] = CAMs[im_ind,class_with_max_prob[im_ind],:,:]
+
             #Now apply locality loss on CAMs. On each class separately
-            loss_1, g1, g2, g3, g4 = criterion_loc(CAMs)
+            loss_1, g1, g2, g3, g4 = criterion_loc(CAMs_for_loss)
         else:
             #Loc loss on feature map
             loss_1, g1, g2, g3, g4 = criterion_loc(feat_map)
@@ -106,25 +110,26 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
         if options['hist_on'] and j%options['print_freq']==0:
             # Add histogram of the group activations        
-            try:
-                t1 = time.time()
-                summary_writer.add_histogram('histogram/g1', g1.clone().cpu().data.numpy(),
-                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
-                t2 = time.time()
-                summary_writer.add_histogram('histogram/g2', g2.clone().cpu().data.numpy(),
-                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
-                t3 = time.time()
-                summary_writer.add_histogram('histogram/g3', g3.clone().cpu().data.numpy(),
-                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
-                t4 = time.time()
-                summary_writer.add_histogram('histogram/g4', g4.clone().cpu().data.numpy(),
-                        epoch*len(train_loader) + j, bins='auto')  # Time almost doubles
-                t5 = time.time()
-                if (t4-t3) > 5*(t2-t1):
-                    ipdb.set_trace()
-            except:
-                print 'Cannot write histograms'
-                ipdb.set_trace()
+            # Somehow very Time-intensive for CAM
+            #try:
+            #    #t1 = time.time()
+            #    summary_writer.add_histogram('histogram/g1', g1.clone().cpu().data.numpy(),
+            #            epoch*len(train_loader) + j, bins='auto')
+            #    #t2 = time.time()
+            #    summary_writer.add_histogram('histogram/g2', g2.clone().cpu().data.numpy(),
+            #            epoch*len(train_loader) + j, bins='auto')
+            #    #t3 = time.time()
+            #    summary_writer.add_histogram('histogram/g3', g3.clone().cpu().data.numpy(),
+            #            epoch*len(train_loader) + j, bins='auto')
+            #    #t4 = time.time()
+            #    summary_writer.add_histogram('histogram/g4', g4.clone().cpu().data.numpy(),
+            #            epoch*len(train_loader) + j, bins='auto')
+            #    #t5 = time.time()
+            #    #if (t4-t3) > 5*(t2-t1):
+            #    #    ipdb.set_trace()
+            #except:
+            #    print 'Cannot write histograms'
+            #    ipdb.set_trace()
 
             # Add scalar for area
             #thresh = -5
@@ -151,7 +156,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                 #TODO
                 # Print CAMs instead of feat maps in case of CAMS
                 if options['CAM']:
-                    avg_feat_map = torch.mean(CAMs,dim=1,keepdim=True)
+                    avg_feat_map = torch.mean(CAMs_for_loss,dim=1,keepdim=True)
                 else:
                     avg_feat_map = torch.mean(feat_map,dim=1,keepdim=True)
                 x = tv_utils.make_grid(avg_feat_map, normalize=True, scale_each=True)
