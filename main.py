@@ -11,7 +11,6 @@ from train import train_wsod_model, validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
 
-#
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn

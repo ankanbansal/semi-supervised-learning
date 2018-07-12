@@ -170,6 +170,9 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         #losses_LEL_BEL.update(loss_5.item())
         total_losses.update(loss.item())
 
+        # Do something like this to accumulate gradients to effectively increase the batch size.
+        # This will be very useful for BEL
+        # https://discuss.pytorch.org/t/how-to-implement-accumulated-gradient-in-pytorch-i-e-iter-size-in-caffe-prototxt/2522/4
         # Optimization step
         optimizer.zero_grad()
         loss.backward()

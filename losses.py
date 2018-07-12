@@ -8,6 +8,7 @@ import ipdb
 import time
 
 
+# Clustering penalties
 class ClusterLoss(torch.nn.Module):
     """
     Cluster loss is comes from the SuBiC paper and consists of two losses.
@@ -29,7 +30,7 @@ class ClusterLoss(torch.nn.Module):
         #TODO
         # Make these more amenable to multi-GPU training
 
-        #Mean Entropy Loss - For sparsity
+        #Mean Entropy Loss - For one-hotness
         #  L1 = Sum_batch_i(Sum_block_m(Entropy(block_i_m)))/TM
         sum1 = torch.zeros([logits.shape[0],1])
         for t in range(logits.shape[0]):
@@ -44,6 +45,7 @@ class ClusterLoss(torch.nn.Module):
         return L1.cuda(), L2.cuda()
 
 
+# Locality loss (group sparsity) over Feature Maps
 class LocalityLoss(torch.nn.Module):
     """
     Enforces small activation regions
@@ -67,9 +69,9 @@ class LocalityLoss(torch.nn.Module):
         """
         # Create 4 or 6 groups. And add the loss over each group.
         # Basically loop over groups and call the group_activity function. Store everything in an
-        # array and return the L1 norm of the array. I think.
-        #TODO
-        # Find the paper and see the exact implementation
+        # array and return the L1 norm of the array.
+        # See the Sparse PCA paper for more details of the idea
+
         # L1 -> top to bottom
         # L2 -> bottom to top
         # L3 -> left to right
@@ -90,21 +92,18 @@ class LocalityLoss(torch.nn.Module):
         for j in reversed(range(feat_map.shape[2])):
             group = feat_map[:,:,:j+1,:]
             group_activity_2[:,j] = self.group_activity(group)
-        #zeros = torch.empty_like(group_activity_2)
         L2 = torch.mean(F.pairwise_distance(group_activity_2,zeros,1)) 
 
         group_activity_3 = torch.zeros([feat_map.shape[0],feat_map.shape[3]]).cuda()
         for k in range(feat_map.shape[3]):
             group = feat_map[:,:,:,k:]
             group_activity_3[:,k] = self.group_activity(group)
-        #zeros = torch.empty_like(group_activity_3)
         L3 = torch.mean(F.pairwise_distance(group_activity_3,zeros,1)) 
 
         group_activity_4 = torch.zeros([feat_map.shape[0],feat_map.shape[3]]).cuda()
         for l in reversed(range(feat_map.shape[3])):
             group = feat_map[:,:,:,:l+1]
             group_activity_4[:,l] = self.group_activity(group)
-        #zeros = torch.empty_like(group_activity_4)
         L4 = torch.mean(F.pairwise_distance(group_activity_4,zeros,1))
         tot_loss = (L1.cuda() + L2.cuda() + L3.cuda() + L4.cuda())/4.0
 
@@ -113,6 +112,7 @@ class LocalityLoss(torch.nn.Module):
         #TODO
         # There's some issue with this. The loss suddenly becomes zero. Most probably some
         # device/memory management thing.
+        # Ignoring for now due to time constraints.
         #squared_feat_map = torch.mul(feat_map,feat_map)
         #squared_feat_map_channels = squared_feat_map.sum(dim=1)
         #
@@ -139,12 +139,11 @@ class LocalityLoss(torch.nn.Module):
 
         #tot_loss_alt = (L1_alt.cuda() + L2_alt.cuda() + L3_alt.cuda() + L4_alt.cuda())/4.0
 
-        #print tot_loss, tot_loss_alt
-
         #return tot_loss_alt, torch.log10(lr_group_norms+0.0000001), torch.log10(rl_group_norms+0.0000001), torch.log10(tb_group_norms+0.0000001), torch.log10(bt_group_norms+0.0000001)
         return tot_loss, torch.log10(group_activity_1), torch.log10(group_activity_2), torch.log10(group_activity_3), torch.log10(group_activity_4)
 
 
+# Locality loss (group sparsity) over Class Activation Maps
 class CAMLocalityLoss(torch.nn.Module):
     """
     Enforces small activation regions
@@ -154,20 +153,24 @@ class CAMLocalityLoss(torch.nn.Module):
     def forward(self, cams):
         """
         Input: cams -> T x (CxHxW)  # Where H is the height of the feature map, W is the width,
-        and C is the number of classes. T is the batch size.
-        Output: L = Locality Loss -> penalises activations with large spreads in the feature map
+        and C is the number of classes. T is the batch size.  CAM -> Class Activation Map
+        Output: L = Locality Loss -> penalises activations with large spreads in the CAMs
         """
         squared_cams = torch.mul(cams,cams) #TxCxHxW
-        # The values in this are extremely small. Very close to zero. And that leads to NaNs very
-        # quickly when we take log
 
+        #See LocalityLoss class for a better understanding of things
+
+        # Get left-to-right and right-to-left groups and group activations
         squared_cams_rows = torch.sum(squared_cams, dim=2)  #TxCxW
         m = squared_cams_rows.shape[2]
         reversed_squared_cams_rows =\
         torch.index_select(squared_cams_rows,2,torch.linspace(-1,-1*m,m).long() + m)
 
+        # L2 norm of grpups
         lr_groups = (torch.cumsum(squared_cams_rows, dim=2) + 1e-20)**0.5  #TxCxW
-        L1 = torch.mean(torch.sum(torch.sum(lr_groups, dim=2), dim=1))  #Try weighing with the class probability in the sum
+                                                                           # Adding 1e-20 to prevent NaN gradients
+        # Loss for the lr_groups - L1 norm
+        L1 = torch.mean(torch.sum(torch.sum(lr_groups, dim=2), dim=1))
 
         rl_groups = (torch.cumsum(reversed_squared_cams_rows, dim=2) + 1e-20)**0.5 
         L2 = torch.mean(torch.sum(torch.sum(rl_groups, dim=2), dim=1))
@@ -186,9 +189,9 @@ class CAMLocalityLoss(torch.nn.Module):
         tot_loss = L1.cuda() + L2.cuda() + L3.cuda() + L4.cuda() 
 
         return tot_loss, torch.mean(torch.log10(lr_groups + 0.00001),dim=1), torch.mean(torch.log10(rl_groups + 0.00001),dim=1), torch.mean(torch.log10(tb_groups + 0.00001),dim=1), torch.mean(torch.log10(bt_groups + 0.00001),dim=1)
-        #return tot_loss, torch.mean(lr_groups,dim=1), torch.mean(rl_groups,dim=1), torch.mean(tb_groups,dim=1), torch.mean(bt_groups,dim=1)
 
 
+# This loss is an idea in progress and can be safely ignored for now
 #class LocalityEntropyLoss(torch.nn.Module):
 #    """
 #    Enforces small activation regions
@@ -220,8 +223,7 @@ class CAMLocalityLoss(torch.nn.Module):
 
 def get_loss(loss_name ='CE'):
     if loss_name == 'CE':
-        # ignore_index ignores the samples which have label -1000. This is useful for few-shot
-        # things.
+        # ignore_index ignores the samples which have label -1000. We specify the unsupervised images by label -1000
         criterion = nn.CrossEntropyLoss(ignore_index=-1000).cuda()
     elif loss_name == 'ClusterLoss':
         criterion = ClusterLoss().cuda()
