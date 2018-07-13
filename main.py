@@ -99,7 +99,8 @@ if __name__ == "__main__":
     cudnn.benchmark = True
 
     print 'Creating data loaders...'
-    train_loader, val_loader = dataLoader.weighted_loaders(options)
+    #train_loader, val_loader = dataLoader.weighted_loaders(options)
+    train_loader, val_loader = dataLoader.loaders(options)
     print 'Created data loaders'
 
     #TODO
