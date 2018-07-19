@@ -52,8 +52,10 @@
 \RequirePackage{multicol} % needed for the list of participants, index
 \RequirePackage{aliascnt}
 
-\setlength{\textwidth}{12.2cm}
-\setlength{\textheight}{19.3cm}
+%\setlength{\textwidth}{12.2cm}
+%\setlength{\textheight}{19.3cm}
+\setlength{\textwidth}{15.2cm}
+\setlength{\textheight}{21.3cm}
 \renewcommand\@pnumwidth{2em}
 \renewcommand\@tocrmarg{3.5em}
 %
@@ -214,8 +216,8 @@
 \widowpenalty=10000
 \clubpenalty=10000
 
-\setlength\oddsidemargin   {63\p@}
-\setlength\evensidemargin  {63\p@}
+\setlength\oddsidemargin   {23\p@}
+\setlength\evensidemargin  {23\p@}
 \setlength\marginparwidth  {90\p@}
 
 \setlength\headsep   {16\p@}
@@ -1186,7 +1188,7 @@ to0pt{\kern0.55\wd0\vrule height0.45\ht0\hss}\box0}}}}
     {\endlist}
 
 \newdimen\headlineindent             % dimension for space between
-\headlineindent=1.166cm              % number and text of headings.
+\headlineindent=1 cm              % number and text of headings.
 
 \def\ps@headings{\let\@mkboth\@gobbletwo
    \let\@oddfoot\@empty\let\@evenfoot\@empty

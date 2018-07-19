@@ -18,10 +18,10 @@
 
 \begin{document}
 %
-\title{Structured Sparsity for Semi-Supervised Learning....} 
+\title{Semi-Supervised Learning....} 
 % Replace with your title
 
-\titlerunning{}
+\titlerunning{Bansal, Zepeda}
 % Replace with a meaningful short version of your title
 %
 \author{Ankan Bansal~~~~~Joaquin Zepeda}
@@ -30,23 +30,29 @@
 %
 \maketitle              % typeset the header of the contribution
 
-\section{Introduction}
+\section{Problem}
+Getting annotations is difficult. We want to leverage the large amount of unlabeled data in addition
+to the existing labeled data for training training deep networks. 
 
-\section{Approach}
+Closest work?
 
-$q_t$ is the output probability distribution over the classes. $T$ is the batch size.
+
+\section{Idea}
+
+$\mathbf{q_t}$ is the output probability distribution over the classes. $T$ is the batch size.
 $\mathcal{L}_{cls}$ is the cross-entropy loss. 
 
-\subsection{Mean Entropy Penalty}
+\subsection{Mean Entropy Penalty (MEL)}
 \begin{equation}
-	\mathcal{L}_{MEL} = \frac{1}{T}\sum_{t=1}^{T}H(q_t)
+	\mathcal{L}_{MEL} = \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q_t})
 \end{equation}
 where $H(.)$ represents the entropy. 
 
-\subsection{Negative Batch Entropy Penalty}
+\subsection{Negative Batch Entropy Penalty (NBEL)}
 \begin{equation}
-	\mathcal{L}_{NBEL} = -H(\frac{1}{T}\sum_{t=1}^{T}q_t)
+	\mathcal{L}_{NBEL} = -H(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q_t})
 \end{equation}
+
 
 \subsection{Locality Penalty}
 Class Activation Maps, $C$. Feature maps, $F$. Weights of the final layer, $W$. $C = A \times W$.
@@ -66,7 +72,47 @@ Then the total loss is given as:
 	\mathcal{L}_{Loc}
 \end{equation}
 
-\section{Results}
+
+\section{Evaluation}
+We use ImageNet as the training and testing dataset. We fix a set of about 64,000 images for which
+we have labels available (supervised set). We use an additional 200,000 images as unsupervised
+images, i.e. images for which labels are not available. We use the ImageNet validation set as the
+test set. We use the state-of-the-art DenseNet model.
+
+\subsection{Baseline}
+We train a network with only the supervised images and only supervised images.
+
+\subsection{Cross-entropy + MEL}
+
+We noticed that the performance of the model was close to the baseline but not quite there. When we
+had tried this case (cross-entropy + MEL) with only supervised data, we had achieved small
+improvements over baseline. This led us to give a higher weight to supervised data while sampling a
+batch. 
+
+We varied the ratio of supervised images in  a batch from the default (0.25) to 1.0. The performance
+keeps improving till 0.8. But from 0.9, over-fitting becomes a problem. A concern could be that the
+gain in performance might be because of passing the supervised data so many times. However, we
+eliminated this.
+
+\subsection{Cross-entropy + MEL + NBEL}
+Now we add the negative batch-entropy loss to cross-entropy loss and MEL. This loss is based on the
+idea that uniform sampling from the dataset should lead to uniform sampling over the output classes.
+We varied $\beta$ while keeping $\alpha$ and $r$ fixed from the previous case. 
+
+
+\subsection{Cross-entropy + Loc}
+We vary $\gamma$.
+
+We are also currently trying to weigh the class activation maps by the corresponding probabilities
+instead of using only the CAM with the maximum probability. 
+
+
+\subsection{Cross-entropy + MEL + BEL + Loc}
+TODO
+
+
+
+
 
 % ---- Bibliography ----
 %

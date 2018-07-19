@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  18 JUL 2018 16:06
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  19 JUL 2018 14:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -80,17 +80,17 @@ Package: aliascnt 2016/05/16 v1.4 Alias counters (HO)
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/carlisle/remreset.sty))
 \c@chapter=\count97
-LaTeX Font Info:    Redeclaring math symbol \Gamma on input line 362.
-LaTeX Font Info:    Redeclaring math symbol \Delta on input line 363.
-LaTeX Font Info:    Redeclaring math symbol \Theta on input line 364.
-LaTeX Font Info:    Redeclaring math symbol \Lambda on input line 365.
-LaTeX Font Info:    Redeclaring math symbol \Xi on input line 366.
-LaTeX Font Info:    Redeclaring math symbol \Pi on input line 367.
-LaTeX Font Info:    Redeclaring math symbol \Sigma on input line 368.
-LaTeX Font Info:    Redeclaring math symbol \Upsilon on input line 369.
-LaTeX Font Info:    Redeclaring math symbol \Phi on input line 370.
-LaTeX Font Info:    Redeclaring math symbol \Psi on input line 371.
-LaTeX Font Info:    Redeclaring math symbol \Omega on input line 372.
+LaTeX Font Info:    Redeclaring math symbol \Gamma on input line 364.
+LaTeX Font Info:    Redeclaring math symbol \Delta on input line 365.
+LaTeX Font Info:    Redeclaring math symbol \Theta on input line 366.
+LaTeX Font Info:    Redeclaring math symbol \Lambda on input line 367.
+LaTeX Font Info:    Redeclaring math symbol \Xi on input line 368.
+LaTeX Font Info:    Redeclaring math symbol \Pi on input line 369.
+LaTeX Font Info:    Redeclaring math symbol \Sigma on input line 370.
+LaTeX Font Info:    Redeclaring math symbol \Upsilon on input line 371.
+LaTeX Font Info:    Redeclaring math symbol \Phi on input line 372.
+LaTeX Font Info:    Redeclaring math symbol \Psi on input line 373.
+LaTeX Font Info:    Redeclaring math symbol \Omega on input line 374.
 \tocchpnum=\dimen112
 \tocsecnum=\dimen113
 \tocsectotal=\dimen114
@@ -328,7 +328,7 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 31.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Underfull \hbox (badness 10000) in paragraph at lines 59--62
+Underfull \hbox (badness 10000) in paragraph at lines 65--68
 
  []
 
@@ -337,30 +337,31 @@ Underfull \hbox (badness 10000) in paragraph at lines 59--62
 {/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 [2] (./report.aux) ) 
 Here is how much of TeX's memory you used:
- 2782 strings out of 492649
- 36585 string characters out of 6129622
- 109424 words of memory out of 5000000
- 6626 multiletter control sequences out of 15000+600000
- 7464 words of font info for 29 fonts, out of 8000000 for 9000
+ 2786 strings out of 492649
+ 36623 string characters out of 6129622
+ 110424 words of memory out of 5000000
+ 6628 multiletter control sequences out of 15000+600000
+ 8083 words of font info for 31 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,6n,27p,269b,268s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 41i,6n,27p,269b,178s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsf
 onts/cm/cmbx10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfo
 nts/cm/cmbx12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfon
-ts/cm/cmbx9.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmex10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/
-cm/cmmi10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/c
-m/cmmi7.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/
-cmr10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cm
-r7.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.
-pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.p
-fb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
-></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10
-.pfb>
-Output written on report.pdf (2 pages, 122560 bytes).
+ts/cm/cmbx7.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmbx9.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmex10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm
+/cmmi10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmmi7.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cm
+r10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7
+.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pf
+b></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
+></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><
+/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.p
+fb>
+Output written on report.pdf (2 pages, 135368 bytes).
 PDF statistics:
- 59 PDF objects out of 1000 (max. 8388607)
- 42 compressed objects within 1 object stream
+ 63 PDF objects out of 1000 (max. 8388607)
+ 45 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
