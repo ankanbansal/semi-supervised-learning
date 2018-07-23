@@ -79,9 +79,9 @@ ensures that the predictions do not collapse to a single label and are evenly sp
 is based on the assumption that, when classes are uniformly distributed, uniform sampling from the
 dataset should lead to uniform sampling over the output classes.
 
-For the supervised images, we are given a ground-truth probability distribution, $\mathbf{p}$ (This is
+For a supervised image, $\textbf{X}$, we are given a ground-truth probability distribution, $\mathbf{p}$ (This is
 just a one-hot probability vector in our case). The objective of a classifier, $f$, is to minimize the
-cross-entropy $E = -\sum_{i=1}^{C}p_i \log(q_i)$ for an image $\mathbf{X}$. Here, $p_i$ and $q_i$
+cross-entropy $E = -\sum_{i=1}^{C}p_i \log(q_i)$. Here, $p_i$ and $q_i$
 are the elements of $\mathbf{p}$ and $\mathbf{q} = f(\mathbf{X}; \Theta)$ respectively. For a
 mini-batch of size $T$, the cross-entropy loss can be defined as $J_C = \frac{1}{T} \sum_{t=1}^{T}
 E_t$, where $E_t$ is the cross-entropy for image $\mathbf{X}_t$.
@@ -127,12 +127,12 @@ k] \times [1 \dots N]$. The left-right loss is then given as: $l_1 = \Omega (C, 
 \left \lVert C_g \right \rVert _2$. This encourages the left-most columns to be zero. The right-left,
 top-bottom, and bottom-top losses can be defined similarly.
 
-The total locality penalty for an image, $\mathbf{X}_t$, is just the sum:
+The locality penalty for an image, $\mathbf{X}_t$, is just the sum:
 \begin{equation}
 	J_L^t = \sum_{j=1}^{4}l_j(C) = \sum_{j=1}^4 \sum_{g \in \mathcal{G}_j} \left\lVert C_g
 	\right\rVert_2
 \end{equation}
-and the total locality penalty for a batch of size $T$ is $J_L = \frac{1}{T} J_L^t$.\\
+and the total locality penalty for a batch of size $T$ is $J_L = \frac{1}{T} \sum_{t=1}^{T} J_L^t$.\\
 
 Adding this to the earlier loss formulation, the total loss is given as:
 \begin{equation}
