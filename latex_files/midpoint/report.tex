@@ -43,7 +43,7 @@
 \maketitle              % typeset the header of the contribution
 
 \section{Problem}
-Getting annotations is difficult. We want to leverage the large amount of unlabeled data in addition
+The problem is how to leverage the large amount of unlabeled data in addition
 to the existing labeled data for training deep networks. 
 
 We have two sets of images, one with labels, $\mathcal{S} = \{(\mathbf{X}_i, y_i)\}_{i=1}^S$, and 
@@ -64,7 +64,7 @@ This ensures that the clusters formed have a semantic meaning.
 Let $H(.)$ represent the entropy of a probability distribution defined as $H(\mathbf{p}) =
 -\sum_{i=1}^{C}p_i \log(p_i)$.  Say that, for an image $\mathbf{X}_t$, the output of the classifier
 is a probability distribution, $\mathbf{q}_t$, over the classes $\mathcal{C}$. We draw a batch of
-images of size $T$ and compute the following two losses over the batch.\\
+size $T$ and compute the following two losses over the batch.\\
 \textbf{Mean Entropy Loss (MEL)}
 \begin{equation}
 	J_M = \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q}_t)
@@ -76,11 +76,11 @@ images of size $T$ and compute the following two losses over the batch.\\
 
 The first (MEL) tries to increase the confidence of the predicted class and the second (NBEL)
 ensures that the predictions do not collapse to a single label and are evenly spread out. NBEL
-is based on the assumption that uniform sampling from the dataset should lead to uniform sampling
-over the output classes.
+is based on the assumption that, when classes are uniformly distributed, uniform sampling from the
+dataset should lead to uniform sampling over the output classes.
 
 For the supervised images, we are given a ground-truth probability distribution, $\mathbf{p}$ (This is
-just a one-hot probability vector in our case). The objective of a classifier is to minimize the
+just a one-hot probability vector in our case). The objective of a classifier, $f$, is to minimize the
 cross-entropy $E = -\sum_{i=1}^{C}p_i \log(q_i)$ for an image $\mathbf{X}$. Here, $p_i$ and $q_i$
 are the elements of $\mathbf{p}$ and $\mathbf{q} = f(\mathbf{X}; \Theta)$ respectively. For a
 mini-batch of size $T$, the cross-entropy loss can be defined as $J_C = \frac{1}{T} \sum_{t=1}^{T}
@@ -88,7 +88,7 @@ E_t$, where $E_t$ is the cross-entropy for image $\mathbf{X}_t$.
 
 Consider a mini-batch, $\mathcal{B} =
 \{(\mathbf{X}_k, y_k)\}_{k=1}^R \cup \{\mathbf{X}_k\}_{k=R+1}^T$, where $\{(\mathbf{X}_k,
-k_i)\}_{k=1}^{R} \in \mathcal{S}$, and ${\mathbf{X}_k}_{k=R+1}^{T} \in \mathcal{U}$. The total loss
+k_i)\}_{k=1}^{R} \in \mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \in \mathcal{U}$. Our total loss
 is given as:
 \begin{equation}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B
@@ -99,14 +99,14 @@ is given as:
 \end{equation}
 
 We find $\alpha$, $\beta$, and $R$ by cross-validation. The ratio $\frac{R}{T}$ can be thought of as
-fine-adjustment for $\alpha$ and $\beta$.
+fine-adjustment for $\alpha$ (and $\beta$?).
 
 
 \subsection{Locality Loss}
 The second idea is a structured sparsity loss. This is a way of incorporating the prior knowledge
 that an object occupies a small region in the image. We use the sparsity inducing norms introduced in
 \cite{groupsparsity,sparsepca}. Consider a matrix, $C \in \mathbb{R}^{N \times
-N}$. Let us define a subset of the power-set of indices of $C$ as
+N}$. Let us define a subset of the power-set of the support of $C$ as
 \begin{equation}
 	\mathcal{G} = \{g_i \subseteq \textrm{support}(C)\}_i
 \end{equation}
@@ -119,8 +119,8 @@ where $C_g$ is the vector formed by the values in $C$ indexed by $g$ and $\left\
 the $L$-$2$ norm. This loss encourages each $C_g$ to go to zero. However, within $C_g,~g
 \in \mathcal{G}$, the $L$-$2$ norm does not promote sparsity.
 
-We focus on the case where $\mathcal{G}$ is a set of horizontal or vertical half-spaces. We use the
-class activation maps \cite{CAM} $C \in \mathbb{R}^{N \times N}$ and define four sets of groups
+We focus on the case where $\mathcal{G}$ is a set of horizontal or vertical half-spaces. We use
+class activation maps $C \in \mathbb{R}^{N \times N}$ \cite{CAM} and define four sets of groups
 and the corresponding losses. The first set (left-right) contains nested vertical half-spaces, i.e.
 collections of columns of $C$ and is defined as: $\mathcal{G}_1 = \{g_{1k}\}_{k=1}^{N}$ where $g_{1k} = [1 \dots
 k] \times [1 \dots N]$. The left-right loss is then given as: $l_1 = \Omega (C, \mathcal{G}_1) = \sum_{g \in \mathcal{G}_1}
@@ -134,7 +134,7 @@ The total locality penalty for an image, $\mathbf{X}_t$, is just the sum:
 \end{equation}
 and the total locality penalty for a batch of size $T$ is $J_L = \frac{1}{T} J_L^t$.\\
 
-Adding this loss to the loss formulation, the total loss is given as:
+Adding this to the earlier loss formulation, the total loss is given as:
 \begin{equation}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B + \gamma J_L
 \end{equation}
@@ -150,7 +150,7 @@ images spread over all 1,000 classes. We report the top-1 accuracy for all exper
 DenseNet network architectures for all our experiments.
 
 \subsection{Baseline}
-As the baseline, we train a network using $\mathcal{S}$ as the training set and $J_C$ as the loss
+As the baseline, we train a network using $\mathcal{S}$ as the training set and only $J_C$ as the loss
 function. This model achieves a top-1 accuracy of $42.04\%$ on the ImageNet validation set. 
 
 \subsection{Cross-entropy + MEL}
@@ -168,32 +168,29 @@ J_M$ and use $\mathcal{S} \cup \mathcal{U}$ as the training set. We set $\alpha 
 		\caption{(Left) Accuracy on the ImageNet validation set for models trained with the cross-entropy
 		loss and MEL with $\mathcal{S}\cup\mathcal{U}$ (red) and only cross-entropy loss with
 	$\mathcal{S}$ (blue). (Right) Accuracy of models trained with cross-entropy loss and MEL with
-$\mathcal{S}\cup\mathcal{U}$ for $\frac{R}{T} = 0.7$ for different amounts of unsupervised data.}
+$\mathcal{S}\cup\mathcal{U}$ for $\frac{R}{T} = 0.7$ for different number of unsupervised images.}
 		\label{fig:acc}
 \end{figure}
 
-Next we vary the number of unsupervised images in the training set. Figure \ref{fig:acc} (right)
+Next, we vary the number of unsupervised images in the training set. Figure \ref{fig:acc} (right)
 shows the validation accuracy for different amount of unsupervised data. We notice that more
-unsupervised data is helpful for improving the performance of classification models. 
+unsupervised data is helpful for improving the classification performance. 
 
 \subsection{Cross-entropy + MEL + NBEL}
-Now we add the negative batch-entropy loss to cross-entropy loss and MEL. We varied $\beta$ while
+Now we add the negative batch-entropy loss to cross-entropy loss and MEL. We vary $\beta$ while
 keeping $\alpha$ and $\frac{R}{T}$ fixed from the previous case. The performance (accuracy on the
-validation set) of these models hasn't been able to reach the level of the previous cases. We
+validation set) of these models hasn't reached the level of the previous cases. We
 believe that this is because of the small batch sizes that we are using. Our next steps for this are
 to increase the batch-size by using more GPUs or accumulating gradients over a few iterations before
 updating the parameters.
 
 \subsection{Cross-entropy + Loc}
 In this case, we take the class activation map (CAM) of the class with the highest probability and
-apply the locality penalty to this CAM. This is still a work in progress. We have observed that CAMs
-are able to localize some of the objects, but we haven't analyzed whether this is because of the
+apply the locality penalty to this CAM. We have observed that CAMs
+are able to localize some objects, but we haven't analyzed whether this is because of the
 formulation of CAMs or because of our loss function. We plan to see the evolution of the
 activations as training progresses to see if the area covered by the activations is reducing and
 whether the CAMs are becoming more accurate with more training. 
-
-\subsection{Cross-entropy + MEL + BEL + Loc}
-TODO
 
 \subsection{Transfer Learning}
 For a comparison with recent work on unsupervised learning, we will experiment
