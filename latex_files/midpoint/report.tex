@@ -88,7 +88,7 @@ E_t$, where $E_t$ is the cross-entropy for image $\mathbf{X}_t$.
 
 Consider a mini-batch, $\mathcal{B} =
 \{(\mathbf{X}_k, y_k)\}_{k=1}^R \cup \{\mathbf{X}_k\}_{k=R+1}^T$, where $\{(\mathbf{X}_k,
-k_i)\}_{k=1}^{R} \in \mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \in \mathcal{U}$. Our total loss
+k_i)\}_{k=1}^{R} \subseteq \mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \subseteq \mathcal{U}$. Our total loss
 is given as:
 \begin{equation}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B
@@ -111,30 +111,47 @@ N}$. Let us define a subset of the power-set of the support of $C$ as
 	\mathcal{G} = \{g_i \subseteq \textrm{support}(C)\}_i
 \end{equation}
 where $\textrm{support}(C) = [1 \dots N] \times [1 \dots N]$ and $\cup_{g \in \mathcal{G}} = \textrm{support}(C)$. The following norm, when used as a
-loss, behaves like an $L$-$1$ norm on the group level and therefore, induces group sparsity.
+loss, behaves like an $L$-$1$ norm on the group level and therefore, induces group sparsity:
 \begin{equation}
-	\Omega (C, \mathcal{G}) = \sum_{g \in \mathcal{G}} \left\lVert C_g \right\rVert _2
+	\Omega (C, \mathcal{G}) = \sum_{g \in \mathcal{G}} \left\lVert C_g \right\rVert _2,
 \end{equation}
 where $C_g$ is the vector formed by the values in $C$ indexed by $g$ and $\left\lVert . \right\rVert_2$ is
 the $L$-$2$ norm. This loss encourages each $C_g$ to go to zero. However, within $C_g,~g
 \in \mathcal{G}$, the $L$-$2$ norm does not promote sparsity.
 
-We focus on the case where $\mathcal{G}$ is a set of horizontal or vertical half-spaces. We use
-class activation maps $C \in \mathbb{R}^{N \times N}$ \cite{CAM} and define four sets of groups
-and the corresponding losses. The first set (left-right) contains nested vertical half-spaces, i.e.
-collections of columns of $C$ and is defined as: $\mathcal{G}_1 = \{g_{1k}\}_{k=1}^{N}$ where $g_{1k} = [1 \dots
-k] \times [1 \dots N]$. The left-right loss is then given as: $l_1 = \Omega (C, \mathcal{G}_1) = \sum_{g \in \mathcal{G}_1}
-\left \lVert C_g \right \rVert _2$. This encourages the left-most columns to be zero. The right-left,
-top-bottom, and bottom-top losses can be defined similarly.
+% We focus on the case where $\mathcal{G}$ is a set nested of horizontal or vertical half-spaces. We use
+% class activation maps $C \in \mathbb{R}^{N \times N}$ \cite{CAM} and define four sets of groups
+% and the corresponding losses. The first set (left-right) contains nested vertical half-spaces, i.e.
+% collections of columns of $C$ and is defined as: $\mathcal{G}_1 = \{g_{1k}\}_{k=1}^{N}$ where $g_{1k} = [1 \dots
+% k] \times [1 \dots N]$. The left-right loss is then given as: $l_1 = \Omega (C, \mathcal{G}_1) = \sum_{g \in \mathcal{G}_1}
+% \left \lVert C_g \right \rVert _2$. This encourages the left-most columns to be zero. The right-left,
+% top-bottom, and bottom-top losses can be defined similarly.
 
-The total locality penalty for an image, $\mathbf{X}_t$, is just the sum:
-\begin{equation}
-	J_L^t = \sum_{j=1}^{4}l_j(C) = \sum_{j=1}^4 \sum_{g \in \mathcal{G}_j} \left\lVert C_g
-	\right\rVert_2
+% The total locality penalty for an image, $\mathbf{X}_t$, is just the sum:
+% \begin{equation}
+% 	J_L^t = \sum_{j=1}^{4}l_j(C) = \sum_{j=1}^4 \sum_{g \in \mathcal{G}_j} \left\lVert C_g
+% 	\right\rVert_2
+% \end{equation}
+% and the total locality penalty for a batch of size $T$ is $J_L = \frac{1}{T} J_L^t$.\\
+
+We use four sets $\mathcal G_i = \{g_{ik}\}_{k=1}^N$ corresponding, respectively, to nested left-to-right and right-to-left colums, and nested top-to-bottom and bottom-to-top columns, \textit{i.e.,}
+\begin{align}
+  g_{1k} & = [1 \ldots N] \times [1 \ldots k] \\
+  g_{2k} & = [1 \ldots N] \times [N-k+1 \ldots N] \\
+  g_{3k} & = [1 \ldots k] \times [1 \ldots N] \\
+  g_{4k} & = [N-k+1 \ldots N] \times [1 \ldots N]
+\end{align}
+Accordingly, we define the locality-inducing penalty for class $i$ of an image $\mathbf{X}_t$ as follows:
+\begin{equation} \label{eq:JLt}
+	J_{L,t}^{i} = \sum_{j=1}^{4}\Omega(C^i_t, \mathcal G_j),
 \end{equation}
-and the total locality penalty for a batch of size $T$ is $J_L = \frac{1}{T} J_L^t$.\\
+where $C^i_{t}$ is the class activation map derived from image $\mathbf X_t$ for class $i$. Given some estimate $\mathbf q_{t}$ of the likelihood of a given class $i$ in image $\mathbf X_t$, we define our locality-inducing penalty to be
+\begin{equation}
+  J_{L,t}^i = \sum_{i} q_{ti} J_{L,t}^i
+\end{equation}
+and total locality penalty for a batch of size $T$ as $J_L = \frac{1}{T} J_L^t$. 
 
-Adding this to the earlier loss formulation, the total loss is given as:
+Adding \eqref{eq:JLt} to the earlier loss formulation, the total loss is given as:
 \begin{equation}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B + \gamma J_L
 \end{equation}
