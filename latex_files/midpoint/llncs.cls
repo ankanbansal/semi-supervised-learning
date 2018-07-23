@@ -54,7 +54,7 @@
 
 %\setlength{\textwidth}{12.2cm}
 %\setlength{\textheight}{19.3cm}
-\setlength{\textwidth}{15.2cm}
+\setlength{\textwidth}{16cm}
 \setlength{\textheight}{21.3cm}
 \renewcommand\@pnumwidth{2em}
 \renewcommand\@tocrmarg{3.5em}
@@ -1188,7 +1188,7 @@ to0pt{\kern0.55\wd0\vrule height0.45\ht0\hss}\box0}}}}
     {\endlist}
 
 \newdimen\headlineindent             % dimension for space between
-\headlineindent=1 cm              % number and text of headings.
+\headlineindent= 0.5cm              % number and text of headings.
 
 \def\ps@headings{\let\@mkboth\@gobbletwo
    \let\@oddfoot\@empty\let\@evenfoot\@empty

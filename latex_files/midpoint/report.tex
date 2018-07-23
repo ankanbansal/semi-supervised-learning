@@ -7,21 +7,33 @@
 \documentclass[runningheads]{llncs}
 %
 \usepackage{graphicx}
+%\usepackage{subfig}
 % Used for displaying a sample figure. If possible, figure files should
 % be included in EPS format.
 %
 \usepackage{amsmath,amssymb} % define this before the line numbering.
 \usepackage{color}
+%\usepackage{tikz}
+%\usetikzlibrary{plotmarks}
+
+%%%%<
+%\usepackage{verbatim}
+%\usepackage[active,tightpage]{preview}
+%\PreviewEnvironment{tikzpicture}
+%\setlength\PreviewBorder{5pt}%
+%%%%>
+
+
 % If you use the hyperref package, please uncomment the following line
 % to display URLs in blue roman font according to Springer's eBook style:
 % \renewcommand\UrlFont{\color{blue}\rmfamily}
 
 \begin{document}
 %
-\title{Semi-Supervised Learning....} 
+\title{Clustering and Locality Penalties for Semi-Supervised Learning} 
 % Replace with your title
 
-\titlerunning{Bansal, Zepeda}
+\titlerunning{Semi-Supervised Learning}
 % Replace with a meaningful short version of your title
 %
 \author{Ankan Bansal~~~~~Joaquin Zepeda}
@@ -32,99 +44,166 @@
 
 \section{Problem}
 Getting annotations is difficult. We want to leverage the large amount of unlabeled data in addition
-to the existing labeled data for training training deep networks. 
+to the existing labeled data for training deep networks. 
 
-Closest work?
+We have two sets of images, one with labels, $\mathcal{S} = \{(\mathbf{X}_i, y_i)\}_{i=1}^S$, and 
+the other without labels, $\mathcal{U} = \{\mathbf{X}_j\}_{j=S+1}^{S+U}$. Here, $\mathbf{X}_i$ is the
+$i^{th}$ image and $y_i \in \mathcal{C}$ is the corresponding label and $\mathcal{C}$ is the set of
+classes.  Using this data, we want to train an image classifier, $f(\mathbf{X}; \Theta)$,
+which takes an image as input and outputs the probability distribution $\mathbf{q}$ over classes
+$\mathcal{C}$.
 
+%Closest work?
 
 \section{Idea}
+The first idea is based on unsupervised clustering of images. We can cluster the images into
+$|\mathcal{C}|$ clusters. However, without any labels, the clusters do not necessarily
+correspond to semantic classes. We can use the labeled samples $\mathcal{S}$ to seed the clusters.
+This ensures that the clusters formed have a semantic meaning.
 
-$\mathbf{q_t}$ is the output probability distribution over the classes. $T$ is the batch size.
-$\mathcal{L}_{cls}$ is the cross-entropy loss. 
-
-\subsection{Mean Entropy Penalty (MEL)}
+Let $H(.)$ represent the entropy of a probability distribution defined as $H(\mathbf{p}) =
+-\sum_{i=1}^{C}p_i \log(p_i)$.  Say that, for an image $\mathbf{X}_t$, the output of the classifier
+is a probability distribution, $\mathbf{q}_t$, over the classes $\mathcal{C}$. We draw a batch of
+images of size $T$ and compute the following two losses over the batch.\\
+\textbf{Mean Entropy Loss (MEL)}
 \begin{equation}
-	\mathcal{L}_{MEL} = \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q_t})
+	J_M = \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q}_t)
 \end{equation}
-where $H(.)$ represents the entropy. 
-
-\subsection{Negative Batch Entropy Penalty (NBEL)}
+\textbf{Negative Batch Entropy Loss (NBEL)}
 \begin{equation}
-	\mathcal{L}_{NBEL} = -H(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q_t})
+	J_B = -H(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t)
 \end{equation}
 
+The first (MEL) tries to increase the confidence of the predicted class and the second (NBEL)
+ensures that the predictions do not collapse to a single label and are evenly spread out. NBEL
+is based on the assumption that uniform sampling from the dataset should lead to uniform sampling
+over the output classes.
 
-\subsection{Locality Penalty}
-Class Activation Maps, $C$. Feature maps, $F$. Weights of the final layer, $W$. $C = A \times W$.
-The class with maximum probability is $i$. Calculate locality loss on $C_i$. 
+For the supervised images, we are given a ground-truth probability distribution, $\mathbf{p}$ (This is
+just a one-hot probability vector in our case). The objective of a classifier is to minimize the
+cross-entropy $E = -\sum_{i=1}^{C}p_i \log(q_i)$ for an image $\mathbf{X}$. Here, $p_i$ and $q_i$
+are the elements of $\mathbf{p}$ and $\mathbf{q} = f(\mathbf{X}; \Theta)$ respectively. For a
+mini-batch of size $T$, the cross-entropy loss can be defined as $J_C = \frac{1}{T} \sum_{t=1}^{T}
+E_t$, where $E_t$ is the cross-entropy for image $\mathbf{X}_t$.
+
+Consider a mini-batch, $\mathcal{B} =
+\{(\mathbf{X}_k, y_k)\}_{k=1}^R \cup \{\mathbf{X}_k\}_{k=R+1}^T$, where $\{(\mathbf{X}_k,
+k_i)\}_{k=1}^{R} \in \mathcal{S}$, and ${\mathbf{X}_k}_{k=R+1}^{T} \in \mathcal{U}$. The total loss
+is given as:
 \begin{equation}
-	\mathcal{L}_{Loc} = \sum_{j=1}^{4}l_j(C_i)
+	\mathcal{L} = J_C + \alpha J_M + \beta J_B
 \end{equation}
-where the sum is over the four groups (left-right, right-left, top-bottom, and bottom-top).
-
-Consider one of these cases. Let, $C_i \in \mathbb{R}^{N \times N}$. We define the left-right group
-norms as $G_{lr} = [\left\lVert C^{k}_i \right\rVert_2~|~C^{k}_i = C_i(1:k,1:N), k = 1 \dots N]$. Then,
-$l_1(C_i) = \left\lVert G_{lr} \right\rVert_1$. Other group losses can be defined similarly.\\
-
-Then the total loss is given as:
 \begin{equation}
-	\mathcal{L} = \mathcal{L}_{cls} + \alpha \mathcal{L}_{MEL} + \beta \mathcal{L}_{NBEL} + \gamma
-	\mathcal{L}_{Loc}
+	\mathcal{L} = \frac{1}{R} \sum_{t=1}^{R} E_t + \alpha \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q}_t) -
+	\beta H(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t)
 \end{equation}
+
+We find $\alpha$, $\beta$, and $R$ by cross-validation. The ratio $\frac{R}{T}$ can be thought of as
+fine-adjustment for $\alpha$ and $\beta$.
+
+
+\subsection{Locality Loss}
+The second idea is a structured sparsity loss. This is a way of incorporating the prior knowledge
+that an object occupies a small region in the image. We use the sparsity inducing norms introduced in
+\cite{groupsparsity,sparsepca}. Consider a matrix, $C \in \mathbb{R}^{N \times
+N}$. Let us define a subset of the power-set of indices of $C$ as
+\begin{equation}
+	\mathcal{G} = \{g_i \subseteq \textrm{support}(C)\}_i
+\end{equation}
+where $\textrm{support}(C) = [1 \dots N] \times [1 \dots N]$ and $\cup_{g \in \mathcal{G}} = \textrm{support}(C)$. The following norm, when used as a
+loss, behaves like an $L$-$1$ norm on the group level and therefore, induces group sparsity.
+\begin{equation}
+	\Omega (C, \mathcal{G}) = \sum_{g \in \mathcal{G}} \left\lVert C_g \right\rVert _2
+\end{equation}
+where $C_g$ is the vector formed by the values in $C$ indexed by $g$ and $\left\lVert . \right\rVert_2$ is
+the $L$-$2$ norm. This loss encourages each $C_g$ to go to zero. However, within $C_g,~g
+\in \mathcal{G}$, the $L$-$2$ norm does not promote sparsity.
+
+We focus on the case where $\mathcal{G}$ is a set of horizontal or vertical half-spaces. We use the
+class activation maps \cite{CAM} $C \in \mathbb{R}^{N \times N}$ and define four sets of groups
+and the corresponding losses. The first set (left-right) contains nested vertical half-spaces, i.e.
+collections of columns of $C$ and is defined as: $\mathcal{G}_1 = \{g_{1k}\}_{k=1}^{N}$ where $g_{1k} = [1 \dots
+k] \times [1 \dots N]$. The left-right loss is then given as: $l_1 = \Omega (C, \mathcal{G}_1) = \sum_{g \in \mathcal{G}_1}
+\left \lVert C_g \right \rVert _2$. This encourages the left-most columns to be zero. The right-left,
+top-bottom, and bottom-top losses can be defined similarly.
+
+The total locality penalty for an image, $\mathbf{X}_t$, is just the sum:
+\begin{equation}
+	J_L^t = \sum_{j=1}^{4}l_j(C) = \sum_{j=1}^4 \sum_{g \in \mathcal{G}_j} \left\lVert C_g
+	\right\rVert_2
+\end{equation}
+and the total locality penalty for a batch of size $T$ is $J_L = \frac{1}{T} J_L^t$.\\
+
+Adding this loss to the loss formulation, the total loss is given as:
+\begin{equation}
+	\mathcal{L} = J_C + \alpha J_M + \beta J_B + \gamma J_L
+\end{equation}
+Again, for a batch, $J_C$ is calculated only for the supervised images, and $J_M, J_B, $ and $J_L$
+are calculated for both supervised and unsupervised images.
 
 
 \section{Evaluation}
-We use ImageNet as the training and testing dataset. We fix a set of about 64,000 images for which
-we have labels available (supervised set). We use an additional 200,000 images as unsupervised
-images, i.e. images for which labels are not available. We use the ImageNet validation set as the
-test set. We use the state-of-the-art DenseNet model.
+We use ImageNet as the training and testing dataset. We fix about 64,000 images for which
+we have labels available (supervised set, $\mathcal{S}$). We use an additional 200,000 images as the
+unsupervised set, $\mathcal{U}$. We use the ImageNet validation set for testing. It has 50,000
+images spread over all 1,000 classes. We report the top-1 accuracy for all experiments. We train
+DenseNet network architectures for all our experiments.
 
 \subsection{Baseline}
-We train a network with only the supervised images and only supervised images.
+As the baseline, we train a network using $\mathcal{S}$ as the training set and $J_C$ as the loss
+function. This model achieves a top-1 accuracy of $42.04\%$ on the ImageNet validation set. 
 
 \subsection{Cross-entropy + MEL}
+Now, we add the $J_M$ term to the loss function, i.e., $\mathcal{L} = J_C + \alpha
+J_M$ and use $\mathcal{S} \cup \mathcal{U}$ as the training set. We set $\alpha = 0.8$. Figure
+\ref{fig:acc} (left) shows the performance as we vary $\frac{R}{T}$.
 
-We noticed that the performance of the model was close to the baseline but not quite there. When we
-had tried this case (cross-entropy + MEL) with only supervised data, we had achieved small
-improvements over baseline. This led us to give a higher weight to supervised data while sampling a
-batch. 
+\begin{figure}
+	\centering
+	{
+		\includegraphics[scale=0.35]{accuracies.pdf}
+	~
+		\includegraphics[scale=0.35]{accuracies_unsup.pdf}
+	}
+		\caption{(Left) Accuracy on the ImageNet validation set for models trained with the cross-entropy
+		loss and MEL with $\mathcal{S}\cup\mathcal{U}$ (red) and only cross-entropy loss with
+	$\mathcal{S}$ (blue). (Right) Accuracy of models trained with cross-entropy loss and MEL with
+$\mathcal{S}\cup\mathcal{U}$ for $\frac{R}{T} = 0.7$ for different amounts of unsupervised data.}
+		\label{fig:acc}
+\end{figure}
 
-We varied the ratio of supervised images in  a batch from the default (0.25) to 1.0. The performance
-keeps improving till 0.8. But from 0.9, over-fitting becomes a problem. A concern could be that the
-gain in performance might be because of passing the supervised data so many times. However, we
-eliminated this.
+Next we vary the number of unsupervised images in the training set. Figure \ref{fig:acc} (right)
+shows the validation accuracy for different amount of unsupervised data. We notice that more
+unsupervised data is helpful for improving the performance of classification models. 
 
 \subsection{Cross-entropy + MEL + NBEL}
-Now we add the negative batch-entropy loss to cross-entropy loss and MEL. This loss is based on the
-idea that uniform sampling from the dataset should lead to uniform sampling over the output classes.
-We varied $\beta$ while keeping $\alpha$ and $r$ fixed from the previous case. 
-
+Now we add the negative batch-entropy loss to cross-entropy loss and MEL. We varied $\beta$ while
+keeping $\alpha$ and $\frac{R}{T}$ fixed from the previous case. The performance (accuracy on the
+validation set) of these models hasn't been able to reach the level of the previous cases. We
+believe that this is because of the small batch sizes that we are using. Our next steps for this are
+to increase the batch-size by using more GPUs or accumulating gradients over a few iterations before
+updating the parameters.
 
 \subsection{Cross-entropy + Loc}
-We vary $\gamma$.
-
-We are also currently trying to weigh the class activation maps by the corresponding probabilities
-instead of using only the CAM with the maximum probability. 
-
+In this case, we take the class activation map (CAM) of the class with the highest probability and
+apply the locality penalty to this CAM. This is still a work in progress. We have observed that CAMs
+are able to localize some of the objects, but we haven't analyzed whether this is because of the
+formulation of CAMs or because of our loss function. We plan to see the evolution of the
+activations as training progresses to see if the area covered by the activations is reducing and
+whether the CAMs are becoming more accurate with more training. 
 
 \subsection{Cross-entropy + MEL + BEL + Loc}
 TODO
 
+\subsection{Transfer Learning}
+For a comparison with recent work on unsupervised learning, we will experiment
+with the transfer learning setting too. In this setting, models trained with only unsupervised
+losses are used as initializations for other tasks (e.g. object detection, semantic segmentation).
+We want to compare the unsupervised losses used by these works against ours. We also want to see if
+models trained with both supervised and unsupervised losses are better than models trained with only
+unsupervised losses for transfer learning. 
 
+\bibliographystyle{splncs04}
+\bibliography{report}
 
-
-
-% ---- Bibliography ----
-%
-% BibTeX users should specify bibliography style 'splncs04'.
-% References will then be sorted and formatted in the correct style.
-%
-% \bibliographystyle{splncs04}
-% \bibliography{mybibliography}
-%
-\begin{thebibliography}{8}
-\bibitem{ref_article1}
-Author, F.: Article title. Journal \textbf{2}(5), 99--110 (2016)
-
-\end{thebibliography}
 \end{document}
