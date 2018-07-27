@@ -1,0 +1,9 @@
+*.aux
+_region_*
+*.bbl
+*.blg
+*.log
+*.pdf
+*~
+*.DS_Store
+*/.DS_Store

@@ -148,6 +148,7 @@ Accordingly, we define the locality-inducing penalty for class $i$ of an image $
 \end{equation}
 where $C^i_{t}$ is the class activation map derived from image $\mathbf X_t$ for class $i$. Given some estimate $\mathbf q_{t}$ of the likelihood of a given class $i$ in image $\mathbf X_t$, we define our locality-inducing penalty to be
 
+The locality penalty for an image, $\mathbf{X}_t$, is just the sum:
 \begin{equation}
   J_{L,t}^i = \sum_{i} q_{ti} J_{L,t}^i
 \end{equation}
