@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import json
+import json 
 import ipdb
 import argparse
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
             print 'Loading checkpoint {}...'.format(options['resume'])
             checkpoint = torch.load(options['resume'])
             #options['start_epoch'] = checkpoint['epoch']
-            options['start_epoch'] = 23
+            options['start_epoch'] = 68
             best_avg_prec = checkpoint['best_avg_prec']
             model.load_state_dict(checkpoint['state_dict'])
         else:
@@ -99,17 +99,10 @@ if __name__ == "__main__":
     cudnn.benchmark = True
 
     print 'Creating data loaders...'
-    #train_loader, val_loader = dataLoader.weighted_loaders(options)
-    train_loader, val_loader = dataLoader.loaders(options)
+    train_loader, val_loader = dataLoader.weighted_loaders(options)
+    #train_loader, val_loader = dataLoader.loaders(options)
     print 'Created data loaders'
 
-    #TODO
-    # Add more options to the optimizer. See DenseNet training details from the paper.
-    # Mainly:
-    # momentum=0.9
-    # nesterov=True
-    # dampening=0.0
-    # weight_decay=0.0001
     optimizer = torch.optim.SGD(model.parameters(), options['learning_rate'], nesterov=True,
             momentum=0.9, dampening=0, weight_decay=0.0001)
 

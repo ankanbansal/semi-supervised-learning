@@ -50,7 +50,7 @@ We have two sets of images, one with labels, $\mathcal{S} = \{(\mathbf{X}_i, y_i
 the other without labels, $\mathcal{U} = \{\mathbf{X}_j\}_{j=S+1}^{S+U}$. Here, $\mathbf{X}_i$ is the
 $i^{th}$ image and $y_i \in \mathcal{C}$ is the corresponding label and $\mathcal{C}$ is the set of
 classes.  Using this data, we want to train an image classifier, $f(\mathbf{X}; \Theta)$,
-which takes an image as input and outputs the probability distribution $\mathbf{q}$ over classes
+which takes an image as input and outputs the probability distribution, $\mathbf{q}$, over classes
 $\mathcal{C}$.
 
 %Closest work?
@@ -88,7 +88,7 @@ E_t$, where $E_t$ is the cross-entropy for image $\mathbf{X}_t$.
 
 Consider a mini-batch, $\mathcal{B} =
 \{(\mathbf{X}_k, y_k)\}_{k=1}^R \cup \{\mathbf{X}_k\}_{k=R+1}^T$, where $\{(\mathbf{X}_k,
-k_i)\}_{k=1}^{R} \in \mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \in \mathcal{U}$. Our total loss
+k_i)\}_{k=1}^{R} \subseteq \mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \subseteq \mathcal{U}$. Our total loss
 is given as:
 \begin{equation}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B
@@ -111,13 +111,38 @@ N}$. Let us define a subset of the power-set of the support of $C$ as
 	\mathcal{G} = \{g_i \subseteq \textrm{support}(C)\}_i
 \end{equation}
 where $\textrm{support}(C) = [1 \dots N] \times [1 \dots N]$ and $\cup_{g \in \mathcal{G}} = \textrm{support}(C)$. The following norm, when used as a
-loss, behaves like an $L$-$1$ norm on the group level and therefore, induces group sparsity.
+loss, behaves like an $L$-$1$ norm on the group level and therefore, induces group sparsity:
 \begin{equation}
 	\Omega (C, \mathcal{G}) = \sum_{g \in \mathcal{G}} \left\lVert C_g \right\rVert _2
 \end{equation}
 where $C_g$ is the vector formed by the values in $C$ indexed by $g$ and $\left\lVert . \right\rVert_2$ is
 the $L$-$2$ norm. This loss encourages each $C_g$ to go to zero. However, within $C_g,~g
 \in \mathcal{G}$, the $L$-$2$ norm does not promote sparsity.
+
+We use four sets $\mathcal{G}_i = \{g_{ik}\}_{k=1}^N$ corresponding, respectively, to nested
+left-to-right and right-to-left columns, and nested top-to-bottom and bottom-to-top rows, \ie, 
+\begin{equation}
+	g_{1k} = [1 \dots N] \times [1 \dots k]
+\end{equation}
+\begin{equation}
+	g_{2k} = [1 \dots N] \times [N-k+1 \dots N]
+\end{equation}
+\begin{equation}
+	g_{3k} = [1 \dots k] \times [1 \dots N]
+\end{equation}
+\begin{equation}
+	g_{4k} = [N-k+1 \dots N] \times [1 \dots N]
+\end{equation}
+
+Accordingly, we define the locality-inducing penalty for predicted class $i$ of an image
+$\mathbf{X}_t$ as follows:
+\begin{equation}
+	J_{L,t}^i = \sum_{j=1}^4 \Omega (C_t^i, \mathcal{G}_j)
+\end{equation}
+where $C_t^i$ is the class activation map derived from image $\mathbf{X}_t$ for class $i$. Given
+some estimate $\mathbf{q}_t$ of the 
+
+
 
 We focus on the case where $\mathcal{G}$ is a set of horizontal or vertical half-spaces. We use
 class activation maps $C \in \mathbb{R}^{N \times N}$ \cite{CAM} and define four sets of groups

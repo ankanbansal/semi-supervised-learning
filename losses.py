@@ -150,10 +150,11 @@ class CAMLocalityLoss(torch.nn.Module):
     """
     def __init__(self):
         super(CAMLocalityLoss, self).__init__()
-    def forward(self, cams):
+    def forward(self, cams, weights):
         """
         Input: cams -> T x (CxHxW)  # Where H is the height of the feature map, W is the width,
         and C is the number of classes. T is the batch size.  CAM -> Class Activation Map
+               weights -> T x C  # Softmax probabilities for each image in a batch
         Output: L = Locality Loss -> penalises activations with large spreads in the CAMs
         """
         squared_cams = torch.mul(cams,cams) #TxCxHxW
@@ -164,27 +165,27 @@ class CAMLocalityLoss(torch.nn.Module):
         squared_cams_rows = torch.sum(squared_cams, dim=2)  #TxCxW
         m = squared_cams_rows.shape[2]
         reversed_squared_cams_rows =\
-        torch.index_select(squared_cams_rows,2,torch.linspace(-1,-1*m,m).long() + m)
+        torch.index_select(squared_cams_rows,2,torch.linspace(-1,-1*m,m).long().cuda() + m)
 
         # L2 norm of grpups
         lr_groups = (torch.cumsum(squared_cams_rows, dim=2) + 1e-20)**0.5  #TxCxW
                                                                            # Adding 1e-20 to prevent NaN gradients
         # Loss for the lr_groups - L1 norm
-        L1 = torch.mean(torch.sum(torch.sum(lr_groups, dim=2), dim=1))
+        L1 = torch.mean(torch.sum(torch.mul(torch.sum(lr_groups, dim=2), weights), dim=1))
 
         rl_groups = (torch.cumsum(reversed_squared_cams_rows, dim=2) + 1e-20)**0.5 
-        L2 = torch.mean(torch.sum(torch.sum(rl_groups, dim=2), dim=1))
+        L2 = torch.mean(torch.sum(torch.mul(torch.sum(rl_groups, dim=2), weights), dim=1))
 
         squared_cams_cols = torch.sum(squared_cams, dim=3)  #TxCxH
         n = squared_cams_cols.shape[2]
         reversed_squared_cams_cols =\
-        torch.index_select(squared_cams_cols,2,torch.linspace(-1,-1*n,n).long() + n)
+        torch.index_select(squared_cams_cols,2,torch.linspace(-1,-1*n,n).long().cuda() + n)
 
         tb_groups = (torch.cumsum(squared_cams_cols, dim=2) + 1e-20)**0.5  #TxCxH
-        L3 = torch.mean(torch.sum(torch.sum(tb_groups, dim=2), dim=1))
+        L3 = torch.mean(torch.sum(torch.mul(torch.sum(tb_groups, dim=2), weights), dim=1))
 
         bt_groups = (torch.cumsum(reversed_squared_cams_cols, dim=2) + 1e-20)**0.5 
-        L4 = torch.mean(torch.sum(torch.sum(bt_groups, dim=2), dim=1))
+        L4 = torch.mean(torch.sum(torch.mul(torch.sum(bt_groups, dim=2), weights), dim=1))
 
         tot_loss = L1.cuda() + L2.cuda() + L3.cuda() + L4.cuda() 
 

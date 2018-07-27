@@ -124,7 +124,6 @@ class WeightedBatchSampler(object):
 
 class WeightedImgDataset(Dataset):
     def __init__(self, all_files, options, transform=None):
-        print "Loading data file..."
         self.all_files = all_files
         self.transform = transform
         self.img_dir = options['train_img_dir']
