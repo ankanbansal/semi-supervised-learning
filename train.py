@@ -200,6 +200,77 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                       batch_time=batch_time))
 
 
+
+
+# Train the complete model (With all the losses)
+def train_wsod_model_multiple(train_loader, model, criterion_list, optimizer, epoch, options, summary_writer):
+    batch_time = AverageMeter()
+    losses_cls = AverageMeter()
+    losses_MEL = AverageMeter()
+    losses_BEL = AverageMeter()
+
+    criterion_cls = criterion_list[0]
+    criterion_clust = criterion_list[2]
+
+    model.train()
+
+    end = time.time()
+
+    total_loss = 0.0
+    optimizer.zero_grad()
+    for j, data in enumerate(train_loader):
+        input_img_var = Variable(data['image'].cuda(async=True))
+        target_var = Variable(data['label'].cuda(async=True))
+
+        # model returns feature map, logits, and probabilities after applying softmax on logits
+        feat_map, logits, _ = model(input_img_var, options)
+
+        # Calculate losses
+        loss_0 = criterion_cls(logits, target_var)
+        loss_2, loss_3 = criterion_clust(logits)
+        loss = loss_0 + options['alpha']*loss_2 + options['beta']*loss_3
+        total_loss += loss/options['accum_batches']
+        
+        #optimizer.zero_grad()
+        loss.backward()
+
+        if j%options['accum_batches'] == 0:
+            optimizer.step()
+            optimizer.zero_grad()
+            total_loss = 0.0
+
+        # Add to tensorboard summary event
+        summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/BEL', loss_3.item(), epoch*len(train_loader) + j)
+        #summary_writer.add_scalar('loss/Total', loss.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/Total', total_loss, epoch*len(train_loader) + j)
+
+        losses_cls.update(loss_0.item())
+        losses_MEL.update(loss_2.item())
+        losses_BEL.update(loss_3.item())
+
+        # Do something like this to accumulate gradients to effectively increase the batch size.
+        # This will be very useful for BEL
+        # https://discuss.pytorch.org/t/how-to-implement-accumulated-gradient-in-pytorch-i-e-iter-size-in-caffe-prototxt/2522/4
+        # Optimization step
+
+        batch_time.update(time.time() - end)
+        end = time.time()
+       
+        if j%options['print_freq'] == 0:
+            print('Epoch: [{0}][{1}/{2}]\t'
+                  'Cls Loss {cls_loss.val:.4f} ({cls_loss.avg:.4f}) | '
+                  'MEL Loss {MEL_loss.val:.4f} ({MEL_loss.avg:.4f}) | '
+                  'BEL Loss {BEL_loss.val:.4f} ({BEL_loss.avg:.4f}) | '
+                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})'.format(epoch, j,
+                      len(train_loader), cls_loss=losses_cls,
+                      MEL_loss=losses_MEL, BEL_loss=losses_BEL,
+                      batch_time=batch_time))
+
+
+
+
 def plot_CAMs(val_loader, model, options):
     model.eval()
     #upsampling = torch.nn.UpsamplingBilinear2d(size=(224,224))

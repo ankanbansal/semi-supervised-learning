@@ -19,13 +19,13 @@ class BasicClassificationModel(nn.Module):
         super(BasicClassificationModel, self).__init__()
         arch = options['base_arch']
         if arch == 'densenet161':
-            pretrained_model = tv_models.densenet161(pretrained=True)
+            pretrained_model = tv_models.densenet161(pretrained=False)
         elif arch == 'densenet169':
-            pretrained_model = tv_models.densenet169(pretrained=True)
+            pretrained_model = tv_models.densenet169(pretrained=False)
         elif arch == 'densenet201':
-            pretrained_model = tv_models.densenet201(pretrained=True)
+            pretrained_model = tv_models.densenet201(pretrained=False)
         elif arch == 'resnet152':
-            pretrained_model = tv_models.resnet152(pretrained=True)
+            pretrained_model = tv_models.resnet152(pretrained=False)
 
         self.features = pretrained_model.features
         #self.avg_pool = nn.AvgPool2d(7)

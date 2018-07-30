@@ -7,7 +7,7 @@ import argparse
 #
 import models
 import dataLoader
-from train import train_wsod_model, validate_model
+from train import train_wsod_model, train_wsod_model_multiple, validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
 
@@ -56,6 +56,7 @@ def argparser():
                                                             # May be make this 1.0 too
     parser.add_argument('--nu', type=float, default=1.0)  # Multiplier for LEL_MEL
     parser.add_argument('--mu', type=float, default=2.0)  # Multiplier for LEL_BEL
+    parser.add_argument('--accum_batches', type=float, default=1.0)
     parser.add_argument('--learning_rate', type=float, default=0.1)
     parser.add_argument('--lr_step', type=int, default=20)
     parser.add_argument('--start_epoch', type=int, default=0)
@@ -90,7 +91,7 @@ if __name__ == "__main__":
             print 'Loading checkpoint {}...'.format(options['resume'])
             checkpoint = torch.load(options['resume'])
             #options['start_epoch'] = checkpoint['epoch']
-            options['start_epoch'] = 68
+            options['start_epoch'] = 16
             best_avg_prec = checkpoint['best_avg_prec']
             model.load_state_dict(checkpoint['state_dict'])
         else:
@@ -188,7 +189,7 @@ if __name__ == "__main__":
 
             print 'Training for epoch:', epoch
             #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
+            train_wsod_model_multiple(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
         writer.close()
     else:
