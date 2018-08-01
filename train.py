@@ -228,13 +228,13 @@ def train_wsod_model_multiple(train_loader, model, criterion_list, optimizer, ep
         # Calculate losses
         loss_0 = criterion_cls(logits, target_var)
         loss_2, loss_3 = criterion_clust(logits)
-        loss = loss_0 + options['alpha']*loss_2 + options['beta']*loss_3
-        total_loss += loss/options['accum_batches']
-        
+        loss = (loss_0 + options['alpha']*loss_2 + options['beta']*loss_3)/options['accum_batches']  # Ideally should divide by accum_batches
         #optimizer.zero_grad()
         loss.backward()
+        
+        total_loss += loss
 
-        if j%options['accum_batches'] == 0:
+        if j%options['accum_batches'] < 0.5:
             optimizer.step()
             optimizer.zero_grad()
             total_loss = 0.0

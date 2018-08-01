@@ -91,7 +91,7 @@ if __name__ == "__main__":
             print 'Loading checkpoint {}...'.format(options['resume'])
             checkpoint = torch.load(options['resume'])
             #options['start_epoch'] = checkpoint['epoch']
-            options['start_epoch'] = 16
+            options['start_epoch'] = 32
             best_avg_prec = checkpoint['best_avg_prec']
             model.load_state_dict(checkpoint['state_dict'])
         else:
