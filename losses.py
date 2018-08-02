@@ -4,14 +4,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import ipdb
+#import ipdb
 import time
 
 
 # Clustering penalties
 class ClusterLoss(torch.nn.Module):
     """
-    Cluster loss is comes from the SuBiC paper and consists of two losses.
+    Cluster loss comes from the SuBiC paper
+    (http://openaccess.thecvf.com/content_ICCV_2017/papers/Jain_SUBIC_A_Supervised_ICCV_2017_paper.pdf) and consists of two losses.
     First is the Mean Entropy Loss which makes the output to be close to one-hot encoded
     vectors.
     Second is the Batch Entropy Loss which ensures a uniform distribution o activations over the
@@ -24,7 +25,9 @@ class ClusterLoss(torch.nn.Module):
     def forward(self, logits):
         """
         Input: block_feats -> T x (M*K)  # Where M is the number of blocks and K is the
-        number of nodes per block. T is the batch size
+        number of nodes per block. T is the batch size.
+        Note that here, unlike SuBiC, there is no notion of blocks, since M=1 and K is the number of
+        classes.
         Output: L = MEL + BEL
         """
         #Mean Entropy Loss - For one-hotness
@@ -145,7 +148,9 @@ class LocalityLoss(torch.nn.Module):
 # Locality loss (group sparsity) over Class Activation Maps
 class CAMLocalityLoss(torch.nn.Module):
     """
-    Enforces small activation regions
+    Enforces small activation regions. This takes as input a class activation map (CAM) and enforces
+    that the activations in the CAM are small. The concept of CAM was introduced in
+    http://cnnlocalization.csail.mit.edu/Zhou_Learning_Deep_Features_CVPR_2016_paper.pdf
     """
     def __init__(self):
         super(CAMLocalityLoss, self).__init__()
@@ -160,9 +165,9 @@ class CAMLocalityLoss(torch.nn.Module):
 
         # Get left-to-right and right-to-left groups and group activations
         squared_cams_rows = torch.sum(squared_cams, dim=2)  #TxCxW
-        m = squared_cams_rows.shape[2]
+        num_cols = squared_cams_rows.shape[2]
         reversed_squared_cams_rows =\
-        torch.index_select(squared_cams_rows,2,torch.linspace(-1,-1*m,m).long().cuda() + m)
+        torch.index_select(squared_cams_rows,2,torch.linspace(-1,-1*num_cols,num_cols).long().cuda() + num_cols)
 
         # L2 norm of groups
         lr_groups = (torch.cumsum(squared_cams_rows, dim=2) + 1e-20)**0.5  #TxCxW
@@ -173,10 +178,11 @@ class CAMLocalityLoss(torch.nn.Module):
         rl_groups = (torch.cumsum(reversed_squared_cams_rows, dim=2) + 1e-20)**0.5 
         L2 = torch.mean(torch.sum(torch.mul(torch.sum(rl_groups, dim=2), weights), dim=1))
 
+        # Get top-to-bottom and bottom-to-top groups and group activations
         squared_cams_cols = torch.sum(squared_cams, dim=3)  #TxCxH
-        n = squared_cams_cols.shape[2]
+        num_rows = squared_cams_cols.shape[2]
         reversed_squared_cams_cols =\
-        torch.index_select(squared_cams_cols,2,torch.linspace(-1,-1*n,n).long().cuda() + n)
+        torch.index_select(squared_cams_cols,2,torch.linspace(-1,-1*num_rows,num_rows).long().cuda() + num_rows)
 
         tb_groups = (torch.cumsum(squared_cams_cols, dim=2) + 1e-20)**0.5  #TxCxH
         L3 = torch.mean(torch.sum(torch.mul(torch.sum(tb_groups, dim=2), weights), dim=1))
