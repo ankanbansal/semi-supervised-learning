@@ -7,9 +7,8 @@ import argparse
 #
 import models
 import dataLoader
-from train import plot_CAMs
 from losses import get_loss
-from helperFunctions import save_checkpoint, adjust_learning_rate
+from helperFunctions import save_checkpoint, adjust_learning_rate, plot_CAMs
 
 import torch
 import torch.nn as nn

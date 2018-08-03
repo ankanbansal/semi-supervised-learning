@@ -1,6 +1,9 @@
 import torch
 import numpy as np
 import shutil
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 # Generic Bounding Box class
 class BBox(object):
@@ -70,3 +73,92 @@ def adjust_learning_rate(optimizer,epoch,model_options,d):
     print 'Learning rate: ', lr
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
+
+def accuracy(output, target, topK=(1,)):
+    """Computes the precision@k for the specified values of k"""
+    maxk = max(topK)
+    batch_size = target.size(0)
+
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t() #transpose
+    correct = pred.eq(target.view(1, -1).expand_as(pred)) #element-wise equality
+
+    res = []
+    for k in topK:
+        correct_k = correct[:k].view(-1).float().sum(0)
+        res.append(correct_k.mul_(100.0 / float(batch_size)))
+    return res
+
+def plot_CAMs(val_loader, model, options):
+    model.eval()
+    #upsampling = torch.nn.UpsamplingBilinear2d(size=(224,224))
+    upsampling = torch.nn.Upsample((224,224), mode='bilinear')
+
+    for j, data in enumerate(val_loader):
+        if j % 10 == 0:
+            print j
+            target = data['label'].cuda(async=True)
+            input_img_var = Variable(data['image'].cuda(async=True))
+            target_var = Variable(target)
+
+            # model returns feature map, logits, and probabilities after applying softmax on logits
+            feat_map, logits, sm_output = model(input_img_var, options)
+
+            class_with_max_prob = torch.argmax(sm_output,dim=1)
+            weights = model.module.classifier.weight  # 1000x2208
+            weights2 = weights.unsqueeze(2).unsqueeze(3)  # 1000x2208x1x1 #Make weights 4-D
+            weights3 = weights2.repeat(1,1,feat_map.shape[2],feat_map.shape[3])  # 100x2208x7x7 # Repeat 
+            CAMs = torch.zeros([feat_map.shape[0],weights.shape[0],feat_map.shape[2],feat_map.shape[3]])
+            CAMs_for_loss = torch.zeros([feat_map.shape[0],1,feat_map.shape[2],feat_map.shape[3]])
+            for im_ind in range(CAMs.shape[0]):
+                #CAMs[im_ind,:,:,:] = torch.mean(weights3*feat_map[im_ind], dim=1)
+                CAMs[im_ind,:,:,:] = torch.sum(weights3*feat_map[im_ind], dim=1)  # Should ideally also divide by the sum of weights
+                CAMs_for_loss[im_ind,:,:,:] = CAMs[im_ind,class_with_max_prob[im_ind],:,:]
+
+            upsampled_CAMs = upsampling(CAMs_for_loss).cuda()
+
+            #TODO
+            # Should we normalize CAMs - Yes
+            # See: https://github.com/philipperemy/tensorflow-class-activation-mapping/blob/master/class_activation_map.py
+            max_val = upsampled_CAMs.max()
+            min_val = upsampled_CAMs.min()
+            upsampled_CAMs = (upsampled_CAMs - min_val)/(max_val - min_val)
+
+            images_with_cams = torch.cat([input_img_var, upsampled_CAMs], 1)
+
+            #ipdb.set_trace()
+
+            # Overlay CAMs on Images
+            #x = tv_utils.make_grid(images_with_cams, normalize=True, scale_each=True) 
+            # TensorboardX does not support RGBA!!
+            #summary_writer.add_image('Activations',images_with_cams,j)
+
+            for k in range(images_with_cams.shape[0]):
+                plt.figure(1)
+                plt.subplot(121)
+                plt.imshow(input_img_var[k].cpu().transpose(0,2).transpose(0,1).detach().numpy())
+                plt.title('Target Class: {}'.format(target[k]))
+                plt.subplot(122)
+                plt.imshow(1-input_img_var[k].cpu().transpose(0,2).transpose(0,1).detach().numpy())
+                plt.imshow(upsampled_CAMs[k].cpu().transpose(0,2).transpose(0,1).detach().numpy().squeeze(axis=2),
+                        cmap=plt.cm.jet, alpha=0.9, interpolation='nearest', vmin=0, vmax=1)
+                #plt.imshow(images_with_cams[k].cpu().transpose(0,2).transpose(0,1).detach().numpy())
+                plt.title('Predicted Class: {}'.format(class_with_max_prob[k]))
+
+                cmap_file_name = 'cams/{}_{}.png'.format(j,k)
+                plt.savefig(cmap_file_name)
+                plt.close()
+
+            #plt.ioff()
+
+            #k = 0
+            #for cam, img in zip(upsampled_CAMs, input_img_var):
+            #    k += 1
+            #    plt.imshow(img.cpu().transpose(0,2).transpose(0,1).numpy())
+            #    plt.imshow(cam.cpu().transpose(0,2).transpose(0,1).numpy(), cmap=plt.cm.jet, alpha=0.5, interpolation='nearest', vmin=0, vmax=1)
+            #    cmap_file_name = 'cams/{}.png'.format(k)
+            #    plt.savefig(cmap_file_name)
+            #    plt.close()
+
+            #ipdb.set_trace()
+

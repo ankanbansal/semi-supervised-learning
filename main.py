@@ -53,7 +53,6 @@ def argparser():
     parser.add_argument('--gamma', type=float, default=0.01)  # Multiplier for Loc Loss
     parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
     parser.add_argument('--beta', type=float, default=2.0)  # Multiplier for BEL
-                                                            # May be make this 1.0 too
     parser.add_argument('--nu', type=float, default=1.0)  # Multiplier for LEL_MEL
     parser.add_argument('--mu', type=float, default=2.0)  # Multiplier for LEL_BEL
     parser.add_argument('--accum_batches', type=float, default=1.0)
@@ -91,7 +90,7 @@ if __name__ == "__main__":
             print 'Loading checkpoint {}...'.format(options['resume'])
             checkpoint = torch.load(options['resume'])
             #options['start_epoch'] = checkpoint['epoch']
-            options['start_epoch'] = 32
+            options['start_epoch'] = 117
             best_avg_prec = checkpoint['best_avg_prec']
             model.load_state_dict(checkpoint['state_dict'])
         else:
@@ -183,13 +182,12 @@ if __name__ == "__main__":
             # Adjust learning rate. Divide learning rate by 10 every d epochs.
             d = options['lr_step']
             adjust_learning_rate(optimizer, epoch, options, d)
-            #TODO
             # Can also look into torch.optim.lr_scheduler and
             # torch.optim.lr_scheduler.ReduceLROnPlateau
 
             print 'Training for epoch:', epoch
             #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-            train_wsod_model_multiple(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
+            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
         writer.close()
     else:

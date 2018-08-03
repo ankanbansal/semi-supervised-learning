@@ -141,6 +141,7 @@ class WeightedImgDataset(Dataset):
             sample = self.transform(sample)
             return sample
 
+
 def weighted_loaders(options):
     sup_file_name = options['sup_json_file']
     sup_files = json.load(open(sup_file_name))
