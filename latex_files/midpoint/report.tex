@@ -64,7 +64,7 @@ This ensures that the clusters formed have a semantic meaning.
 Let $H(.)$ represent the entropy of a probability distribution defined as $H(\mathbf{p}) =
 -\sum_{i=1}^{C}p_i \log(p_i)$.  Say that, for an image $\mathbf{X}_t$, the output of the classifier
 is a probability distribution, $\mathbf{q}_t$, over the classes $\mathcal{C}$. We draw a batch of
-size $T$ and compute the following two losses over the batch.\\
+size $T$ and compute the following two losses over the batch \cite{subic}.\\
 \textbf{Mean Entropy Loss (MEL)}
 \begin{equation}
 	J_M = \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q}_t)

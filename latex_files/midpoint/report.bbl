@@ -3,6 +3,11 @@
 \providecommand{\urlprefix}{URL }
 \providecommand{\doi}[1]{https://doi.org/#1}
 
+\bibitem{subic}
+Jain, H., Zepeda, J., P{\'e}rez, P., Gribonval, R.: Subic: A supervised,
+  structured binary code for image search. In: Proc. Int. Conf. Computer
+  Vision. vol.~1, p.~3 (2017)
+
 \bibitem{groupsparsity}
 Jenatton, R., Audibert, J.Y., Bach, F.: Structured variable selection with
   sparsity-inducing norms. Journal of Machine Learning Research
