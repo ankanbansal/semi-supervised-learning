@@ -12,11 +12,12 @@ class TrainTransform(object):
     def __init__(self):
         super(TrainTransform, self).__init__()
     def __call__(self, sample):
-        normalize = tv_transforms.Normalize(mean=[0.5,0.5,0.5],
-                                         std=[0.5,0.5,0.5])
-        image_transform = tv_transforms.Compose([tv_transforms.RandomHorizontalFlip(),
-                                              tv_transforms.ToTensor(),
-                                               normalize])
+        normalize = tv_transforms.Normalize(mean=[0.49139968,0.48215827,0.44653124],
+                                         std=[0.24703233,0.24348505,0.26158768])
+        image_transform = tv_transforms.Compose([tv_transforms.RandomCrop(32,padding=4),
+                                                 tv_transforms.RandomHorizontalFlip(),
+                                                 tv_transforms.ToTensor(),
+                                                 normalize])
         sample = image_transform(sample)
         return sample
 
@@ -25,8 +26,8 @@ class ValTransform(object):
     def __init__(self):
         super(ValTransform, self).__init__()
     def __call__(self, sample):
-        normalize = tv_transforms.Normalize(mean=[0.5,0.5,0.5],
-                                         std=[0.5,0.5,0.5])
+        normalize = tv_transforms.Normalize(mean=[0.49139968,0.48215827,0.44653124],
+                                         std=[0.24703233,0.24348505,0.26158768])
         image_transform = tv_transforms.Compose([tv_transforms.ToTensor(),
                                                  normalize])
         sample = image_transform(sample)

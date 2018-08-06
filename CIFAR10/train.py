@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from helperFunctions import AverageMeter, accuracy
+from helperFunctions import AverageMeter, accuracy, error
 
 import torch
 import torch.nn.functional as F
@@ -79,6 +79,8 @@ def validate_model(val_loader, model, criterion, options):
     top1 = AverageMeter()
     top5 = AverageMeter()
 
+    top1err = AverageMeter()
+
     model.eval()
 
     end = time.time()
@@ -92,9 +94,11 @@ def validate_model(val_loader, model, criterion, options):
         loss = criterion(logits, target_var)
 
         prec1, prec5 = accuracy(logits.data, target, topK=(1,5))
+        err = error(logits.data, target)
         losses_cls.update(loss.data[0], data[0].size(0))
         top1.update(prec1[0],data[0].size(0))
         top5.update(prec5[0],data[0].size(0))
+        top1err.update(err[0],data[0].size(0))
 
         batch_time.update(time.time() - end)
         end = time.time()
@@ -110,4 +114,4 @@ def validate_model(val_loader, model, criterion, options):
                         top5=top5))
     
     #print('*Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'.format(top1=top1, top5=top5))
-    return top1.avg
+    return top1.avg, top1err.avg

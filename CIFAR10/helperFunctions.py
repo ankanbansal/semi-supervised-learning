@@ -47,6 +47,17 @@ def accuracy(output, target, topK=(1,)):
         res.append(correct_k.mul_(100.0 / float(batch_size)))
     return res
 
+def error(output, target):
+    maxk = 1
+    batch_size = target.size(0)
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t() #transpose
+    correct = pred.eq(target.view(1, -1).expand_as(pred)) #element-wise equality
+    incorrect = 1 - correct
+    incorrect_k = incorrect.view(-1).float().sum(0)
+    res = incorrect_k.mul_(100.0 / float(batch_size))
+    return res
+
 def imshow(img):
     img = img/2 + 0.5
     npimg = img.numpy()
