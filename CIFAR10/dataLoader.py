@@ -8,15 +8,14 @@ import torchvision.transforms as tv_transforms
 from torch.utils.data import DataLoader
 
 
-# Transforms taken from the state of the art densenet model
+# Transforms taken from near state-of-the-art densenet model
+# https://github.com/kuangliu/pytorch-cifar/blob/master/main.py
 class TrainTransform(object):
     def __init__(self):
         super(TrainTransform, self).__init__()
     def __call__(self, sample):
         normalize = tv_transforms.Normalize(mean=[0.49139968,0.48215827,0.44653124],
                                          std=[0.2023,0.1994,0.2010])
-#                                         std=[0.24703233,0.24348505,0.26158768])
-        # Why is the std different in different sources?
         image_transform = tv_transforms.Compose([tv_transforms.RandomCrop(32,padding=4),
                                                  tv_transforms.RandomHorizontalFlip(),
                                                  tv_transforms.ToTensor(),
@@ -31,20 +30,19 @@ class ValTransform(object):
     def __call__(self, sample):
         normalize = tv_transforms.Normalize(mean=[0.49139968,0.48215827,0.44653124],
                                          std=[0.2023,0.1994,0.2010])
-#                                         std=[0.24703233,0.24348505,0.26158768])
         image_transform = tv_transforms.Compose([tv_transforms.ToTensor(),
                                                  normalize])
         sample = image_transform(sample)
         return sample
 
-
+# "Weighted" refers to weighing of the ratio of supervised and unsupervised samples
 class WeightedBatchSampler(object):
-    def __init__(self, all_indices, sup_indices, unsup_indices, options):
-        self.all_indices = all_indices
-        self.batch_size = options['batch_size']
-        self.sup_indices = sup_indices
-        self.unsup_indices = unsup_indices
-        self.ratio = options['sup_to_tot_ratio']
+    def __init__(self, dataset_size, num_sup, batch_size, sup_to_tot_ratio):
+        self.all_indices = list(range(dataset_size))
+        self.sup_indices = np.random.choice(self.all_indices, size=num_sup, replace=False)
+        self.unsup_indices = list(set(self.all_indices) - set(self.sup_indices))
+        self.batch_size = batch_size
+        self.ratio = sup_to_tot_ratio
     def __len__(self):
         return len(self.all_indices) // self.batch_size
     def __iter__(self):
@@ -62,23 +60,17 @@ class WeightedBatchSampler(object):
 
 
 def weighted_loaders(options):
-    # Randomly select few images as supervised and the rest as unsupervised.
-    all_indices = list(range(options['dataset_size']))
-    sup_indices = np.random.choice(all_indices, size=options['num_sup'], replace=False)
-    unsup_indices = list(set(all_indices) - set(sup_indices))
-
     train_transform = TrainTransform()
     train_dataset = tv.datasets.CIFAR10(root=options['data_dir'], train=True, transform=train_transform)
-    
-    for i in range(len(train_dataset.train_labels)):
-        if i in sup_indices:
-            continue
-        else:
-            train_dataset.train_labels[i] = -1000
 
     # Each batch contains the some supervised images and some unsupervised images depending on
     # sup_to_tot_ratio
-    sampler = WeightedBatchSampler(all_indices, sup_indices, unsup_indices, options)
+    sampler = WeightedBatchSampler(train_dataset.train_data.shape[0], options['num_sup'], options['batch_size'],
+            options['sup_to_tot_ratio'])
+
+    for i in sampler.unsup_indices:
+        train_dataset.train_labels[i] = -1000
+
     train_loader = DataLoader(train_dataset,
                               batch_sampler=sampler,
                               num_workers=options['num_workers'])
