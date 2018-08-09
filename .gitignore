@@ -5,6 +5,10 @@ latex_files/*.bbl
 latex_files/*.blg
 latex_files/*.brf
 latex_files/*.pdf
+*.nav
+*.out
+*.snm
+*.toc
 logs/*
 models/*
 checkpoints/*
