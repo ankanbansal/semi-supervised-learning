@@ -6,7 +6,7 @@ r_t = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 mel_accuracy = [36.71, 39.91, 41.27, 41.5, 42.26, 45.22, 44.69, 41.72]
 baseline_accuracy = [42.04]*8
 
-plt.plot(r_t, mel_accuracy, '-rs', r_t, baseline_accuracy, '-bs')
+plt.plot(r_t, mel_accuracy, '-rs', r_t, baseline_accuracy, '-b')
 for a,b in zip(r_t, mel_accuracy): 
     plt.text(a, b, str(b))
 plt.grid()

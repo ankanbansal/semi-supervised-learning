@@ -4,8 +4,11 @@
 \usepackage{times}
 \usepackage{epsfig}
 \usepackage{graphicx}
+\graphicspath{{images/}}
 \usepackage{amsmath}
 \usepackage{amssymb}
+
+\usepackage{subcaption}
 
 % Include other packages here, before hyperref.
 
@@ -14,7 +17,7 @@
 % run, let it finish, and you should be clear).
 \usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
 
-% \cvprfinalcopy % *** Uncomment this line for the final submission
+\cvprfinalcopy % *** Uncomment this line for the final submission
 
 \def\cvprPaperID{****} % *** Enter the CVPR Paper ID here
 \def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
@@ -26,20 +29,20 @@
 %%%%%%%%% TITLE
 \title{Something Using Something}
 
-\author{First Author\\
-Institution1\\
-Institution1 address\\
-{\tt\small firstauthor@i1.org}
+\author{Ankan Bansal\\
+UMD\\
+%Institution1 address\\
+%{\tt\small firstauthor@i1.org}
 % For a paper whose authors are all at the same institution,
 % omit the following lines up until the closing ``}''.
 % Additional authors and addresses can be added with ``\and'',
 % just like the second author.
 % To save space, use either the email address or home page, not both
 \and
-Second Author\\
-Institution2\\
-First line of institution2 address\\
-{\tt\small secondauthor@i2.org}
+Joaquin Zepeda\\
+Amazon\\
+%First line of institution2 address\\
+%{\tt\small secondauthor@i2.org}
 }
 
 \maketitle
@@ -49,7 +52,7 @@ First line of institution2 address\\
 \input{abstract}
 \input{intro}
 \input{approach}
-\input{results}
+\input{experiments}
 \input{related}
 \input{conclusion}
 

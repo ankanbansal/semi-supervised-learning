@@ -1,33 +1,50 @@
 \section{Introduction}
 
 % This is all just placeholder text.
-Data is hard to come by. There is a need for computer vision systems which require less data. We
-present such a system. We study this. And we study that. We report amazing results. We have the best
-results. 
+Data-hungry deep neural networks require vast amounts of labeled data. Collecting images from the
+internet has never been easier. However, getting these images annotated is expensive and
+time-consuming. We need to devise algorithms that can use the unlabeled data as well. This unlabeled
+data can be utilized in different ways. In computer vision, these methods can broadly be divided
+into i.) unsupervised learning, ii.) weakly-supervised learning, and iii.) semi-supervised learning.
 
-We use a combination of three loss functions - Classification, Clustering, Locality. 
+In unsupervised learning, the aim is to learn discriminative representations from data without any
+supervision from annotations. In weakly-supervised learning, the annotations are provided at a
+coarser-level than the task. For example, for object detection, they could be just image-level
+annotations. Semi-supervised learning is the most general of these settings. Here, annotations for
+some data while a large portion of the data is un-annotated. There are several variants of
+semi-supervised learning. These include webly-supervised learning \cite{} and omni-supervised
+learning \cite{}. 
 
-Different levels of supervision. Few-shot learning. Weakly supervised detection/classification.
+In this paper, we present an approach for semi-supervised image classification. The proposed
+approach uses two clustering penalties. The first one (Mean Entropy Loss (MEL)) encourages the
+classifier to be more confident about its prediction and the second (Negative Batch Entropy Loss
+(NBEL)) incorporates prior knowledge about the class distribution of the dataset into the learning
+pipeline. These two penalties can be applied along with the cross-entropy loss commonly used for
+fully-supervised learning. The benefit of using these penalties is that they can be applied to both
+supervised and unsupervised data. 
+
+The presented approach can be... 
 
 
-\begin{figure}[t]
-\begin{center}
-\fbox{\rule{0pt}{2in} \rule{0.9\linewidth}{0pt}}
-   %\includegraphics[width=0.8\linewidth]{egfigure.eps}
-\end{center}
-   \caption{Example of caption.  It is set in Roman so that mathematics
-   (always set in Roman: $B \sin A = A \sin B$) may be included without an
-   ugly clash.}
-\label{fig:long}
-\label{fig:onecol}
-\end{figure}
 
 
-\begin{figure*}
-\begin{center}
-\fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
-\end{center}
-   \caption{Example of a short caption, which should be centered.}
-\label{fig:short}
-\end{figure*}
-
+%\begin{figure}[t]
+%\begin{center}
+%\fbox{\rule{0pt}{2in} \rule{0.9\linewidth}{0pt}}
+%   %\includegraphics[width=0.8\linewidth]{egfigure.eps}
+%\end{center}
+%   \caption{Example of caption.  It is set in Roman so that mathematics
+%   (always set in Roman: $B \sin A = A \sin B$) may be included without an
+%   ugly clash.}
+%\label{fig:long}
+%\label{fig:onecol}
+%\end{figure}
+%
+%
+%\begin{figure*}
+%\begin{center}
+%\fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
+%\end{center}
+%   \caption{Example of a short caption, which should be centered.}
+%\label{fig:short}
+%\end{figure*}
