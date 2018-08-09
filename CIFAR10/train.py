@@ -34,7 +34,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         target_var = Variable(data[1].cuda(async=True))
 
         # model returns feature map, logits, and probabilities after applying softmax on logits
-        _, logits, sm_output = model(input_img_var, options)
+        logits, sm_output = model(input_img_var, options)
         class_with_max_prob = torch.argmax(sm_output,dim=1)
 
         # Calculate losses
@@ -89,7 +89,7 @@ def validate_model(val_loader, model, criterion, options):
         target = data[1].cuda(async=True)
         target_var = Variable(target)
 
-        _, logits, _ = model(input_img_var, options)
+        logits, _ = model(input_img_var, options)
 
         loss = criterion(logits, target_var)
 

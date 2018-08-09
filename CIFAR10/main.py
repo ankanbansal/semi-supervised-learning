@@ -22,8 +22,8 @@ from tensorboardX import SummaryWriter
 def argparser():
     parser = argparse.ArgumentParser(description='Semi-Supervised Learning')
     parser.add_argument('--log_dir', type=str, default='./logs/')
-    parser.add_argument('--base_arch', type=str, default='densenet121',
-            choices=['densenet121','resnet18'], 
+    parser.add_argument('--base_arch', type=str, default='densenet_cifar',
+            choices=['densenet_cifar','densenet121'], 
             help='Which model to use as the base architecture')
     parser.add_argument('--mode', type=str, default='train', choices=['train','test','validate'])
     parser.add_argument('--type', type=str, default='cls_clust',

@@ -14,7 +14,9 @@ class TrainTransform(object):
         super(TrainTransform, self).__init__()
     def __call__(self, sample):
         normalize = tv_transforms.Normalize(mean=[0.49139968,0.48215827,0.44653124],
-                                         std=[0.24703233,0.24348505,0.26158768])
+                                         std=[0.2023,0.1994,0.2010])
+#                                         std=[0.24703233,0.24348505,0.26158768])
+        # Why is the std different in different sources?
         image_transform = tv_transforms.Compose([tv_transforms.RandomCrop(32,padding=4),
                                                  tv_transforms.RandomHorizontalFlip(),
                                                  tv_transforms.ToTensor(),
@@ -28,7 +30,8 @@ class ValTransform(object):
         super(ValTransform, self).__init__()
     def __call__(self, sample):
         normalize = tv_transforms.Normalize(mean=[0.49139968,0.48215827,0.44653124],
-                                         std=[0.24703233,0.24348505,0.26158768])
+                                         std=[0.2023,0.1994,0.2010])
+#                                         std=[0.24703233,0.24348505,0.26158768])
         image_transform = tv_transforms.Compose([tv_transforms.ToTensor(),
                                                  normalize])
         sample = image_transform(sample)
