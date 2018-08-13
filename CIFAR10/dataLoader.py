@@ -10,6 +10,8 @@ from torch.utils.data import DataLoader
 
 # Transforms taken from near state-of-the-art densenet model
 # https://github.com/kuangliu/pytorch-cifar/blob/master/main.py
+# The best Densenet model from the paper achieved 3.46% while our model achieves 5.13%.
+# I couldn't find an implementation that achieves 3.46%. So I am using the one which gets 5.13%.
 class TrainTransform(object):
     def __init__(self):
         super(TrainTransform, self).__init__()
@@ -22,7 +24,6 @@ class TrainTransform(object):
                                                  normalize])
         sample = image_transform(sample)
         return sample
-
 
 class ValTransform(object):
     def __init__(self):
@@ -37,16 +38,16 @@ class ValTransform(object):
 
 # "Weighted" refers to weighing of the ratio of supervised and unsupervised samples
 class WeightedBatchSampler(object):
-    def __init__(self, dataset_size, num_sup, batch_size, sup_to_tot_ratio):
+    def __init__(self, dataset_size, num_sup, num_unsup, batch_size, sup_to_tot_ratio):
         self.all_indices = list(range(dataset_size))
         self.sup_indices = np.random.choice(self.all_indices, size=num_sup, replace=False)
-        self.unsup_indices = list(set(self.all_indices) - set(self.sup_indices))
+        self.unsup_indices = list(set(self.all_indices) - set(self.sup_indices))[:num_unsup]
         self.batch_size = batch_size
         self.ratio = sup_to_tot_ratio
     def __len__(self):
-        return len(self.all_indices) // self.batch_size
+        return (len(self.sup_indices) + len(self.unsup_indices)) // self.batch_size
     def __iter__(self):
-        num_batches = len(self.all_indices) // self.batch_size
+        num_batches = (len(self.sup_indices) + len(self.unsup_indices)) // self.batch_size
         while num_batches > 0:
             batch = []
             while len(batch) < self.batch_size:
@@ -65,8 +66,8 @@ def weighted_loaders(options):
 
     # Each batch contains the some supervised images and some unsupervised images depending on
     # sup_to_tot_ratio
-    sampler = WeightedBatchSampler(train_dataset.train_data.shape[0], options['num_sup'], options['batch_size'],
-            options['sup_to_tot_ratio'])
+    sampler = WeightedBatchSampler(train_dataset.train_data.shape[0], options['num_sup'],
+            options['num_unsup'], options['batch_size'], options['sup_to_tot_ratio'])
 
     for i in sampler.unsup_indices:
         train_dataset.train_labels[i] = -1000
