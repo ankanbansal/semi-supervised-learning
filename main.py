@@ -7,7 +7,7 @@ import argparse
 #
 import models
 import dataLoader
-from train import train_wsod_model, train_wsod_model_multiple, validate_model
+from train import train_wsod_model, train_wsod_model_multiple, train_wsod_model_larger_CAM, validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
 
@@ -32,7 +32,7 @@ def argparser():
     parser.add_argument('--type', type=str, default='all',
             choices=['cls','cls_loc','cls_clust','all', 'cls_MEL', 'cls_BEL', 'cls_MEL_loc', 'cls_MEL_LELMEL',
                 'cls_MEL_LEL', 'cls_clust_LELMEL', 'cls_clust_LEL','only_clust'])
-    parser.add_argument('--CAM', type=bool, default=False)
+    parser.add_argument('--CAM', type=bool, default=True)
     parser.add_argument('--resume', type=str, default=None, help='Want to start from a checkpoint? Enter filename.')
     parser.add_argument('--test_checkpoint', type=str, default=None, help='Enter filename.')
     parser.add_argument('--batch_size', type=int, default=140)
@@ -49,7 +49,7 @@ def argparser():
 #            default='/efs/data/weakly-detection-data/imagenet-detection/ILSVRC/Data/CLS-LOC/train/')
     parser.add_argument('--val_img_dir', type=str, default='/efs2/data/imagenet/val/')
     parser.add_argument('--save_dir', type=str, default='./checkpoints/')
-    parser.add_argument('--sup_to_total_ratio', type=float, default=0.25)
+    parser.add_argument('--sup_to_tot_ratio', type=float, default=0.25)
     parser.add_argument('--gamma', type=float, default=0.01)  # Multiplier for Loc Loss
     parser.add_argument('--alpha', type=float, default=1.0)  # Multiplier for MEL
     parser.add_argument('--beta', type=float, default=2.0)  # Multiplier for BEL
@@ -70,8 +70,8 @@ if __name__ == "__main__":
     options = argparser()
     best_avg_prec = 0.0
     is_best = False
-    #model = models.BasicClassificationModel(options)
-    model = models.WSODModel(options)
+    # model = models.WSODModel(options)
+    model = models.WSODModel_LargerCAM(options)
     # The following return loss classes
     criterion_cls = get_loss(loss_name='CE')  # Cross-entropy loss
     if options['CAM']:
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
             print 'Training for epoch:', epoch
             #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
+            train_wsod_model_larger_CAM(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
         writer.close()
     else:

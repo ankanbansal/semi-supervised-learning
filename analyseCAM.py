@@ -39,7 +39,7 @@ def argparser():
     parser.add_argument('--train_img_dir', type=str,
             default='/efs2/data/imagenet/train/')
     parser.add_argument('--val_img_dir', type=str, default='/efs2/data/imagenet/train/')
-    parser.add_argument('--sup_to_total_ratio', type=float, default=0.25)
+    parser.add_argument('--sup_to_tot_ratio', type=float, default=0.25)
     parser.add_argument('--num_classes', type=int, default=1000)
     parser.add_argument('--print_freq', type=int, default=1)
     options = vars(parser.parse_args())

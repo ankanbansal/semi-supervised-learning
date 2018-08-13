@@ -92,15 +92,40 @@ class WSODModel(nn.Module):
 
         logits = self.classifier(lin_feat)
 
-        if options['mode'] == 'train':
-            # softmax
-            final_output = F.softmax(logits)
-        else:
-            # put a 1 at argmax and 0 everywhere else
-            #max_ind = torch.argmax(logits,dim=1)
-            #final_output = torch.zeros([logits.shape[0],logits.shape[1]]) # bs x C
-            #for j in range(final_output.shape[0]):
-            #    final_output[j,max_ind[j]] = 1.0
-            final_output = F.softmax(logits)
-        #return feat_map, logits, final_output
+        final_output = F.softmax(logits)
         return feat_map_relu, logits, final_output
+
+
+class WSODModel_LargerCAM(nn.Module):
+    def __init__(self,options):
+        super(WSODModel_LargerCAM, self).__init__()
+
+        pretrained_model = tv_models.densenet161(pretrained=False)
+
+        self.feature_map = nn.Sequential(pretrained_model.features.conv0, pretrained_model.features.norm0,
+                                      pretrained_model.features.relu0, pretrained_model.features.pool0,
+                                      pretrained_model.features.denseblock1, pretrained_model.features.transition1,
+                                      pretrained_model.features.denseblock2, pretrained_model.features.transition2, 
+                                      pretrained_model.features.denseblock3, pretrained_model.features.transition3.norm,
+                                      pretrained_model.features.transition3.relu, pretrained_model.features.transition3.conv)
+        self.norm = nn.BatchNorm2d(1056)
+        self.classifier1 = nn.Linear(in_features=1056,out_features=1000)
+
+        self.small_cnn = nn.Sequential(pretrained_model.features.transition3.pool, pretrained_model.features.denseblock4, 
+                                       pretrained_model.features.norm5)
+        self.classifier = pretrained_model.classifier
+
+    def forward(self, img, options):
+        feat_map = self.feature_map(img)
+        norm1 = self.norm(feat_map)
+        feat_map_relu = F.relu(feat_map,inplace=True)
+        lin_feat1 = F.avg_pool2d(feat_map_relu, kernel_size=14, stride=1).view(feat_map_relu.size(0),-1)
+        logits1 = self.classifier1(lin_feat1)
+        final_output1 = F.softmax(logits1)
+
+        feat_map_small = self.small_cnn(feat_map)
+        feat_map_relu_small = F.relu(feat_map_small,inplace=True)
+        lin_feat2 = F.avg_pool2d(feat_map_relu_small, kernel_size=7, stride=1).view(feat_map_relu_small.size(0),-1)  # First 1-D feature
+        logits2 = self.classifier(lin_feat2)
+        
+        return feat_map_relu, logits1, logits2, final_output1

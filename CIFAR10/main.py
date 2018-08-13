@@ -36,8 +36,8 @@ def argparser():
     parser.add_argument('--data_dir', type=str, default='/efs2/data/')
     parser.add_argument('--val_on', type=bool, default=False)
     parser.add_argument('--save_dir', type=str, default='./sup_4k_tot_50k/checkpoints/')
-    parser.add_argument('--dataset_size', type=int, default=50000)
     parser.add_argument('--num_sup', type=int, default=4000)
+    parser.add_argument('--num_unsup', type=int, default=46000)
     parser.add_argument('--sup_to_tot_ratio', type=float, default=0.5)
     parser.add_argument('--alpha', type=float, default=0.8)  # Multiplier for MEL
     parser.add_argument('--beta', type=float, default=0.8)  # Multiplier for BEL

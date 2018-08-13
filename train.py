@@ -200,6 +200,92 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
                       batch_time=batch_time))
 
 
+# Train the complete model (With all the losses)
+def train_wsod_model_larger_CAM(train_loader, model, criterion_list, optimizer, epoch, options, summary_writer):
+    batch_time = AverageMeter()
+    losses_cls = AverageMeter()
+    losses_cls_large = AverageMeter()
+    losses_loc = AverageMeter()
+    losses_MEL = AverageMeter()
+    losses_BEL = AverageMeter()
+    total_losses = AverageMeter()
+
+    criterion_cls = criterion_list[0]
+    criterion_loc = criterion_list[1]
+    criterion_clust = criterion_list[2]
+
+    # Set model to train mode
+    model.train()
+
+    end = time.time()
+    for j, data in enumerate(train_loader):
+        input_img_var = Variable(data['image'].cuda(async=True))
+        target_var = Variable(data['label'].cuda(async=True))
+
+        # model returns feature map, logits, and probabilities after applying softmax on logits
+        feat_map, logits_large, logits, sm_output_large = model(input_img_var, options)
+        class_with_max_prob_large = torch.argmax(sm_output_large,dim=1)
+
+        # Calculate losses
+        loss_0 = criterion_cls(logits, target_var)
+        loss_0_large = criterion_cls(logits_large, target_var)
+
+        #CAM - remember to change loss in main.py
+        weights = model.module.classifier1.weight  # 1000x1056
+        weights2 = weights.unsqueeze(2).unsqueeze(3)  # 1000x1056x1x1 #Make weights 4-D
+        weights3 = weights2.repeat(1,1,feat_map.shape[2],feat_map.shape[3])  # 1000x1056x14x14 # Repeat 
+        CAMs = torch.zeros([feat_map.shape[0],weights.shape[0],feat_map.shape[2],feat_map.shape[3]])
+        CAMs_for_loss = torch.zeros([feat_map.shape[0],1,feat_map.shape[2],feat_map.shape[3]])
+        for im_ind in range(CAMs.shape[0]):
+            CAMs[im_ind,:,:,:] = torch.sum(weights3*feat_map[im_ind], dim=1)  # Should ideally also divide by the sum of weights
+            CAMs_for_loss[im_ind,:,:,:] = CAMs[im_ind,class_with_max_prob_large[im_ind],:,:]
+
+        #Now apply locality loss on CAMs. On each class separately
+        loss_1, g1, g2, g3, g4 = criterion_loc(CAMs.cuda(), sm_output_large)
+
+        loss_2, loss_3 = criterion_clust(logits)
+
+        loss = loss_0 + loss_0_large + options['gamma']*loss_1 + options['alpha']*loss_2 + options['beta']*loss_3
+
+        # Add to tensorboard summary event
+        summary_writer.add_scalar('loss/cls', loss_0.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/cls_large', loss_0_large.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/loc', loss_1.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/MEL', loss_2.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/BEL', loss_3.item(), epoch*len(train_loader) + j)
+        summary_writer.add_scalar('loss/total', loss.item(), epoch*len(train_loader) + j)
+
+        if options['hist_on'] and j%(options['print_freq']*10)==0:
+            avg_feat_map = torch.mean(CAMs_for_loss,dim=1,keepdim=True)
+            x = tv_utils.make_grid(avg_feat_map, normalize=True, scale_each=True)
+            summary_writer.add_image('Image',x,epoch*len(train_loader) + j)
+
+        losses_cls.update(loss_0.item())
+        losses_cls_large.update(loss_0_large.item())
+        losses_loc.update(loss_1.item())
+        losses_MEL.update(loss_2.item())
+        losses_BEL.update(loss_3.item())
+        total_losses.update(loss.item())
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        batch_time.update(time.time() - end)
+        end = time.time()
+       
+        if j%options['print_freq'] == 0:
+            print('Epoch: [{0}][{1}/{2}]\t'
+                  'Cls Loss {cls_loss.val:.4f} ({cls_loss.avg:.4f}) | '
+                  'Cls Loss Large {cls_loss_large.val:.4f} ({cls_loss_large.avg:.4f}) | '
+                  'Loc Loss {loc_loss.val:.4f} ({loc_loss.avg:.4f}) | '
+                  'MEL Loss {MEL_loss.val:.4f} ({MEL_loss.avg:.4f}) | '
+                  'BEL Loss {BEL_loss.val:.4f} ({BEL_loss.avg:.4f}) | '
+                  'Loss {loss.val:.4f} ({loss.avg:.4f}) | '
+                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})'.format(epoch, j,
+                      len(train_loader), cls_loss=losses_cls, cls_loss_large=losses_cls_large,
+                      loc_loss=losses_loc, MEL_loss=losses_MEL, BEL_loss=losses_BEL, 
+                      loss=total_losses, batch_time=batch_time))
 
 
 # Train the model (With only clustering losses and gradient accumulation for larger
@@ -284,7 +370,8 @@ def validate_model(val_loader, model, criterion, options):
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(target)
 
-        _, logits, _ = model(input_img_var, options)
+        #_, logits, _ = model(input_img_var, options)
+        _, _, logits, _ = model(input_img_var, options)
 
         loss = criterion(logits, target_var)
 

@@ -145,6 +145,7 @@ class LocalityLoss(torch.nn.Module):
         return tot_loss, torch.log10(group_activity_1), torch.log10(group_activity_2), torch.log10(group_activity_3), torch.log10(group_activity_4)
 
 
+# SLOW for larger maps
 # Locality loss (group sparsity) over Class Activation Maps
 class CAMLocalityLoss(torch.nn.Module):
     """

@@ -105,7 +105,7 @@ class WeightedBatchSampler(object):
         self.batch_size = options['batch_size']
         self.sup_indices = sup_indices
         self.unsup_indices = unsup_indices
-        self.ratio = options['sup_to_total_ratio']
+        self.ratio = options['sup_to_tot_ratio']
     def __len__(self):
         return len(self.all_indices) // self.batch_size
     def __iter__(self):
