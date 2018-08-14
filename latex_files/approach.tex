@@ -8,6 +8,8 @@ classes.  Using this data, we want to train an image classifier, $f(\mathbf{X}; 
 which takes an image as input and outputs the probability distribution, $\mathbf{q}$, over classes
 $\mathcal{C}$.
 
+\subsection{Clustering Losses}
+
 The first idea is based on unsupervised clustering of images. We can cluster the images into
 $|\mathcal{C}|$ clusters. However, without any labels, the clusters do not necessarily
 correspond to semantic classes. We can use the labeled samples $\mathcal{S}$ to seed the clusters.
@@ -70,7 +72,7 @@ is given as:
 
 We find $\alpha$, $\beta$, and $R$ by cross-validation. The ratio $\frac{R}{T}$ can be thought of as
 corresponding to the relative importance of supervised and unsupervised losses and data. A high
-$\frac{R}{T}$ indicates that the supervised data and losses are considered more important their
+$\frac{R}{T}$ indicates that the supervised data and losses are considered more important than their
 unsupervised counterparts. 
 
 
@@ -114,6 +116,7 @@ and total locality penalty for a batch of size $T$ as $J_L =  \frac{1}{T} \sum_{
 
 Adding \eqref{eq:JLt} to the earlier loss formulation, the total loss is given as:
 \begin{equation}
+	\label{eq:total}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B + \gamma J_L
 \end{equation}
 Again, for a batch, $J_C$ is calculated only for the supervised images, and $J_M, J_B, $ and $J_L$

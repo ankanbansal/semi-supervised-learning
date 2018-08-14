@@ -1,17 +1,17 @@
 \section{Experiments}
+\label{sec:experiments}
 
-We validate the approach on CIFAR-10 and ImageNet. We first describe the experimental and evaluation
+We validate the approach on ImageNet and CIFAR-10. We first describe the experimental and evaluation
 set-up for both datasets and then present results under several scenarios.
 
 \subsection{Set-up}
 \textbf{ImageNet} We fix about 64,000 images for which
 we have labels available (supervised set, $\mathcal{S}$). We use an additional 200,000 images as the
 unsupervised set, $\mathcal{U}$. We use the ImageNet validation set for testing. It has 50,000
-images spread over all 1,000 classes. We report the top-1 accuracy for all experiments. We train
-DenseNet-161 network architectures for all our experiments. Unless stated otherwise, we use a
-batch-size of 52 for all ImageNet experiments. We later discuss that this might not be the ideal
-batch-size. However, training with much larger batch-sizes requires vast amounts of time and
-resources. 
+images spread over all 1,000 classes. We train DenseNet-161 networks scratch and report the
+top-1 accuracy for all our experiments. Unless stated otherwise, we use a batch-size of 52 for all
+ImageNet experiments. We later discuss that this might not be the ideal batch-size. However,
+training with much larger batch-sizes requires vast amounts of time and resources.
 
 % Need to report errors instead of accuracy for ImageNet too.
 
@@ -22,23 +22,24 @@ test set which contains 10,000 images spread over all 10 classes. The mean and s
 deviation of the errors are reported as the performance metric. We use the CIFAR-10 specific
 DenseNet-121 network architecture. We use a batch-size of 64 for all CIFAR-10 experiments. 
 
-We follow the training details from \cite{densenet} for training all networks.
+We follow the training details from \cite{densenet} for training all networks. These include
+the optimizer, momentum, and the learning rate schedule.
 
-\subsection{Effects of Losses and Hyper-parameters}
-In this section, we study how each component of the loss behaves and what are the best
-hyper-parameter values to achieve the highest performance. We start with the baseline model where we
-use only the supervised images to train the network with only cross-entropy loss. We progressively
-make the loss function more complex by adding different losses and report the observations.  
+\subsection{Significance of Unsupervised Losses}
+In this section, we show the utility of each unsupervised component of the loss in equation \ref{eq:total}. We
+start with the baseline model where we use only the supervised images to train the network with only cross-entropy
+loss. We progressively add more components to the optimization objective and report the
+corresponding performance results and observations.
 
 \subsubsection{Baseline}
-As the baseline, we train a network using $\mathcal{S}$ as the training set and only $J_C$ as the loss
-function. Our DenseNet-161 model achieves a top-1 accuracy of $42.04\%$ on the ImageNet validation
+As the baseline, we train a network using $\mathcal{S}$ as the training set and only $J_C$ as the
+objective. Our DenseNet-161 model achieves a top-1 accuracy of $42.04\%$ on the ImageNet validation
 set. 
 
-For CIFAR-10, the baseline model reaches an error of $.... \pm ....$. Comparing this to the $5.13\%$
+For CIFAR-10, the baseline model reaches an error of $20.16\% \pm 1.02$. Comparing this to the $5.13\%$
 error achieved by training the same network on the whole dataset, we note that the error rate is
 very far from desired. We show that this gap can be reduced by using the available unsupervised data and
-the proposed loss functions. 
+the proposed loss functions.  
 
 \subsubsection{Cross-entropy + MEL}
 Now, we add the $J_M$ term to the loss function, i.e., $\mathcal{L} = J_C + \alpha
@@ -117,14 +118,97 @@ formulation of CAMs or because of our loss function. We plan to see the evolutio
 activations as training progresses to see if the area covered by the activations is reducing and
 whether the CAMs are becoming more accurate with more training. 
 
-%\subsubsection{Transfer Learning}
+\subsubsection{Data Efficiency}
+
+
+
+
+
+\subsubsection{Transfer Learning}
 %For a comparison with recent work on unsupervised learning, we will experiment
 %with the transfer learning setting too. In this setting, models trained with only unsupervised
 %losses are used as initializations for other tasks (e.g. object detection, semantic segmentation).
 %We want to compare the unsupervised losses used by these works against ours. We also want to see if
 %models trained with both supervised and unsupervised losses are better than models trained with only
 %unsupervised losses for transfer learning. 
-%
+
 
 \subsection{Results}
 We present results and comparisons.
+
+\begin{table}
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		\textbf{Method} & \textbf{Error} \\
+		\hline
+		Ladder Net \cite{Rasmus2015} & \\
+		\hline
+		Temporal Ensembling \cite{Laine2016}  & \\
+		\hline
+		Regularization \cite{Sajjadi2016a}  & \\
+		\hline
+		CCL \cite{Kamnitsas2018}  & \\
+		\hline
+		Improved Techniques \cite{Salimans2016}  & \\
+		\hline
+		CatGAN \cite{Springenberg2015}  & \\
+		\hline
+		TripleGAN \cite{Li2017}  & \\
+		\hline
+		BadGAN \cite{Dai2017}  & \\
+		\hline
+		\hline
+		Only $J_C$ (Ours)  & \\
+		\hline
+		$J_C + J_M$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_B$ (Ours)  & \\
+		\hline
+		$J_C + J_L$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_L$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_B + J_L$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_B + J_L$ (Ours) $+$  & \\
+		Regularization  & \\
+		\hline
+	\end{tabular}
+	\caption{CIFAR-10 Results}
+	\label{tab:cifar_results}
+\end{table}
+
+
+
+
+
+\begin{table}
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		\textbf{Method} & \textbf{Error} \\
+		\hline
+		Regularization \cite{Sajjadi2016a}  & \\
+		\hline
+		\hline
+		Only $J_C$ (Ours)  & \\
+		\hline
+		$J_C + J_M$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_B$ (Ours)  & \\
+		\hline
+		$J_C + J_L$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_L$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_B + J_L$ (Ours)  & \\
+		\hline
+		$J_C + J_M + J_B + J_L$ (Ours) $+$  & \\
+		Regularization  & \\
+		\hline
+	\end{tabular}
+	\caption{ImageNet Results}
+	\label{tab:imagenet_results}
+\end{table}
+
