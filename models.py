@@ -97,6 +97,11 @@ class WSODModel(nn.Module):
 
 
 class WSODModel_LargerCAM(nn.Module):
+    """
+        This creates a new branch at the feature map 14x14 in DenseNet. This new branch is used for
+        Locality Loss.
+        The original/main branch is used for x-entropy, MEL, and NBEL
+    """
     def __init__(self,options):
         super(WSODModel_LargerCAM, self).__init__()
 
@@ -118,7 +123,7 @@ class WSODModel_LargerCAM(nn.Module):
     def forward(self, img, options):
         feat_map = self.feature_map(img)
         norm1 = self.norm(feat_map)
-        feat_map_relu = F.relu(feat_map,inplace=True)
+        feat_map_relu = F.relu(norm1,inplace=True)
         lin_feat1 = F.avg_pool2d(feat_map_relu, kernel_size=14, stride=1).view(feat_map_relu.size(0),-1)
         logits1 = self.classifier1(lin_feat1)
         final_output1 = F.softmax(logits1)
@@ -129,3 +134,33 @@ class WSODModel_LargerCAM(nn.Module):
         logits2 = self.classifier(lin_feat2)
         
         return feat_map_relu, logits1, logits2, final_output1
+
+
+class WSODModel_LargerCAM_SameBranch(nn.Module):
+    """
+        This creates a new branch at the feature map 14x14 in DenseNet. This new branch is then used
+        for all losses
+    """
+    def __init__(self,options):
+        super(WSODModel_LargerCAM_SameBranch, self).__init__()
+
+        pretrained_model = tv_models.densenet161(pretrained=False)
+
+        self.feature_map = nn.Sequential(pretrained_model.features.conv0, pretrained_model.features.norm0,
+                                      pretrained_model.features.relu0, pretrained_model.features.pool0,
+                                      pretrained_model.features.denseblock1, pretrained_model.features.transition1,
+                                      pretrained_model.features.denseblock2, pretrained_model.features.transition2, 
+                                      pretrained_model.features.denseblock3, pretrained_model.features.transition3.norm,
+                                      pretrained_model.features.transition3.relu, pretrained_model.features.transition3.conv)
+        self.norm = nn.BatchNorm2d(1056)
+        self.classifier = nn.Linear(in_features=1056,out_features=1000)
+
+    def forward(self, img, options):
+        feat_map = self.feature_map(img)
+        norm1 = self.norm(feat_map)
+        feat_map_relu = F.relu(norm1,inplace=True)
+        lin_feat = F.avg_pool2d(feat_map_relu, kernel_size=14, stride=1).view(feat_map_relu.size(0),-1)
+        logits = self.classifier(lin_feat)
+        final_output = F.softmax(logits)
+        
+        return feat_map_relu, logits, final_output
