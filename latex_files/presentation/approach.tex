@@ -2,92 +2,17 @@
 \begin{frame}
 	\frametitle{Approach}
 	\begin{itemize}
-		\item Three losses
-		\item MEL
-		\item NBEL
-		\item Locality Loss
+		\item We introduce three unsupervised losses which can be used with supervised losses during
+			training
+		\item The first two can be considered clustering losses
+			\includegraphics[width=0.4\textwidth, height=0.2\textwidth, center]{images/clust2}
+		\item The third is a locality penalty
+			\includegraphics[scale=0.3, center]{images/locality}
 	\end{itemize}
 \end{frame}
 
-
-\subsection{MEL}
-\begin{frame}
-	\frametitle{Mean Entropy Loss}
-	\begin{itemize}
-		\item Test
-	\begin{block}{MEL}
-		\begin{equation*}
-			J_M = \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q}_t)
-		\end{equation*}
-	\end{block}
-	\end{itemize}
-\end{frame}
-
-
-\subsection{NBEL}
-\begin{frame}
-	\frametitle{Negative Batch Entropy Loss}
-	\begin{itemize}
-		\item Test
-			\begin{block}{Test}
-				\begin{equation*}
-					\label{eq:nbel}
-					J_B = D_{KL} (\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t \lVert \mathbf{d})
-				\end{equation*}
-			\end{block}
-		\item $D_{KL}$ is the KL-divergence
-		\item $\mathbf{d}$ is the distribution of classes in the dataset
-	\end{itemize}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Negative Batch Entropy Loss}
-	\begin{itemize}
-		\item In case of datasets with uniform distribution of classes
-			\begin{block}{Test}
-				\begin{equation*}
-					J_B = -H(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t)
-				\end{equation*}
-			\end{block}
-	\end{itemize}
-
-\end{frame}
-
-
-\subsection{Locality}
-\begin{frame}
-	\frametitle{Locality Penalty}
-	\begin{itemize}
-		\item Test
-	\end{itemize}
-	\begin{block}{Test}
-		Test
-	\end{block}
-\end{frame}
-
-\subsection{Total Loss}
-\begin{frame}
-	\frametitle{Total Loss}
-	\begin{itemize}
-		\item Cross-entropy applied only on supervised
-		\item Mean Entropy on both
-		\item Negative Batch Entropy on both
-		\item Locality on both
-	\end{itemize}
-	\begin{block}{Total Loss}
-		\begin{equation*}
-			\mathcal{L} = J_C + \alpha J_M + \beta J_B + \gamma J_L
-		\end{equation*}
-	\end{block}
-\end{frame}
-
-\subsection{Sampling Ratio}
-\begin{frame}
-	\frametitle{Sampling Ratio for Training}
-	\begin{itemize}
-		\item Each batch contains some supervised and some unsupervised images
-		\item Loss depends on the relative importance of supervised and unsupervised data
-		\item Sample at different rates
-	\end{itemize}
-\end{frame}
-
+\input{clustering}
+\input{xentropy}
+\input{sampling}
+\input{locality}
+\input{total}

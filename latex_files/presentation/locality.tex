@@ -1,0 +1,69 @@
+\subsection{Locality Loss}
+
+\begin{frame}
+	\frametitle{Locality Loss}
+	\begin{itemize}
+		\item Consider a class activation map (CAM) \footnote{\tiny{B. Zhou, A. Khosla, A.
+				Lapedriza, A. Oliva, and A. Torralba. Learning Deep Features for Discriminative
+		Localization.}}, $C \in \mathbb{R}^{N \times N}$. Let $\mathcal{G} = \{g_i
+			\subseteq \textrm{support}(C)\}_i$ where $\textrm{support}(C) = [1 \dots N] \times [1
+			\dots N]$ and $\cup_{g \in \mathcal{G}} = \textrm{support}(C)$
+		\item The following norm induces group sparsity:
+	\end{itemize}
+
+	\begin{block}{Sparsity Norm}
+		\begin{equation*}
+			\Omega (C, \mathcal{G}) = \sum_{g \in \mathcal{G}} \left\lVert C_g \right\rVert _2
+		\end{equation*}
+		where $C_g$ is the vector formed by the values in $C$ indexed by $g$ and $\left\lVert . \right\rVert_2$ is
+		the $L$-$2$ norm.
+	\end{block}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Locality Loss}
+
+	\begin{itemize}
+		\item We use four sets $\mathcal G_i = \{g_{ik}\}_{k=1}^N$ corresponding, respectively, to nested
+	left-to-right and right-to-left columns, and nested top-to-bottom and bottom-to-top columns,
+	\textit{i.e.,}
+	\end{itemize}
+	\begin{block}{Groups}
+		\vspace{-15pt}
+		\begin{align*}
+			g_{1k} & = [1 \ldots N] \times [1 \ldots k] \\
+			g_{2k} & = [1 \ldots N] \times [N-k+1 \ldots N] \\
+			g_{3k} & = [1 \ldots k] \times [1 \ldots N] \\
+			g_{4k} & = [N-k+1 \ldots N] \times [1 \ldots N]
+		\end{align*}
+	\end{block}
+
+	\vspace{-10pt}
+	\begin{figure}
+		\subfigure{\includegraphics[scale=0.25]{images/g1}}~~
+		\subfigure{\includegraphics[scale=0.25]{images/g2}}~~
+		\subfigure{\includegraphics[scale=0.25]{images/g3}}
+	\end{figure}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Locality Loss}
+	\begin{itemize}
+		\item The locality-inducing penalty for class $i$ for an image $\mathbf{X}_t$ is:
+			\begin{block}{}
+				\begin{equation*}
+					J_{L,t}^{i} = \sum_{j=1}^{4}\Omega(C^i_t, \mathcal G_j)
+				\end{equation*}
+				where $C^i_{t}$ is the CAM for class $i$
+			\end{block}
+		\item Given $\mathbf{q}_t = f(\mathbf{X}_t; \Theta)$, we define our locality-inducing penalty to be
+			\begin{block}{}
+				\begin{equation*}
+					J_{L,t} = \sum_{i} q_{ti} J_{L,t}^i
+				\end{equation*}
+			\end{block}
+		\item The total locality penalty for a batch is $J_L =  \frac{1}{T} \sum_{t=1}^T J_L^t$
+	\end{itemize}
+\end{frame}

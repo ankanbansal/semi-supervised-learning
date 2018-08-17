@@ -55,7 +55,7 @@ E_t$, where $E_t$ is the cross-entropy for image $\mathbf{X}_t$.
 
 Consider a mini-batch, $\mathcal{B} =
 \{(\mathbf{X}_k, y_k)\}_{k=1}^R \cup \{\mathbf{X}_k\}_{k=R+1}^T$, where $\{(\mathbf{X}_k,
-k_i)\}_{k=1}^{R} \subseteq \mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \subseteq \mathcal{U}$. Our total loss
+y_k)\}_{k=1}^{R} \subseteq \mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \subseteq \mathcal{U}$. Our total loss
 is given as:
 \begin{equation}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B
@@ -94,7 +94,7 @@ the $L$-$2$ norm. This loss encourages each $C_g$ to go to zero. However, within
 \in \mathcal{G}$, the $L$-$2$ norm does not promote sparsity.
 
 We use four sets $\mathcal G_i = \{g_{ik}\}_{k=1}^N$ corresponding, respectively, to nested
-left-to-right and right-to-left colums, and nested top-to-bottom and bottom-to-top columns,
+left-to-right and right-to-left columns, and nested top-to-bottom and bottom-to-top columns,
 \textit{i.e.,}
 \begin{align}
   g_{1k} & = [1 \ldots N] \times [1 \ldots k] \\
@@ -114,7 +114,7 @@ X_t$, we define our locality-inducing penalty to be
 \end{equation}
 and total locality penalty for a batch of size $T$ as $J_L =  \frac{1}{T} \sum_{t=1}^T J_L^t$. 
 
-Adding \eqref{eq:JLt} to the earlier loss formulation, the total loss is given as:
+Adding $J_L$ to the earlier loss formulation, the total loss is given as:
 \begin{equation}
 	\label{eq:total}
 	\mathcal{L} = J_C + \alpha J_M + \beta J_B + \gamma J_L

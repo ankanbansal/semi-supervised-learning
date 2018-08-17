@@ -1,0 +1,16 @@
+\subsection{Total Loss}
+\begin{frame}
+	\frametitle{Total Loss}
+	\begin{itemize}
+		\item Supervised losses (cross-entropy) applied only on labeled data
+		\item Unsupervised losses can be applied on both
+		\item Our total loss is given as:
+	\end{itemize}
+	\begin{block}{Total Loss}
+		\begin{equation*}
+			\mathcal{L} = J_C + \alpha J_M + \beta J_B + \gamma J_L
+		\end{equation*}
+		where $J_C$ is the cross-entropy loss, $J_M$ is mean entropy loss, $J_B$ is negative batch
+		entropy loss, and $J_L$ is the locality loss
+	\end{block}
+\end{frame}
