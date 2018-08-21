@@ -1,19 +1,22 @@
 \subsection{Cross Entropy and Clustering}
 \begin{frame}
-	\frametitle{Adding Cross Entropy Loss}
+	\frametitle{Adding the Supervised Loss}
 	\begin{itemize}
-		\item For a mini-batch, $\mathcal{B} = \{(\mathbf{X}_k, y_k)\}_{k=1}^R \cup
-			\{\mathbf{X}_k\}_{k=R+1}^T$, where $\{(\mathbf{X}_k, y_k)\}_{k=1}^{R} \subseteq
-			\mathcal{S}$, and $\{\mathbf{X}_k\}_{k=R+1}^{T} \subseteq \mathcal{U}$, the total loss
-			can be give as:
+		\item Consider a mini-batch, 
+			\begin{block}{Mini-batch}
+				\begin{equation*}
+					\mathcal{B} = \{(\mathbf{X}_k, y_k)\}_{k=1}^R \cup \{\mathbf{X}_k\}_{k=R+1}^T
+				\end{equation*}
+			\end{block}
+		\item The sum of supervised and clustering losses is:
 			\begin{block}{Cross Entropy + Clustering}
 				\begin{equation*}
-					\mathcal{L} = J_C + \alpha J_M + \beta J_B
+					\mathcal{L} = \underbrace{\frac{1}{R} \sum_{t=1}^{R} E_t}_{J_C} ~+~ \alpha
+					\underbrace{\frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q}_t)}_{J_M} ~+~
+					\beta \underbrace{D_{KL}(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t \lVert
+					\mathbf{d})}_{J_B}
 				\end{equation*}
-				\begin{equation*}
-					\mathcal{L} = \frac{1}{R} \sum_{t=1}^{R} E_t + \alpha \frac{1}{T}\sum_{t=1}^{T}H(\mathbf{q}_t) +
-					\beta D_{KL}(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t \lVert \mathbf{d})
-				\end{equation*}
+				where $E_t$ is the cross-entropy loss for image $\mathbf{X}_t$
 			\end{block}
 	\end{itemize}
 \end{frame}
