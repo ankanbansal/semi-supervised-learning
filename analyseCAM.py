@@ -50,7 +50,7 @@ if __name__ == "__main__":
     best_avg_prec = 0.0
     is_best = False
     #model = models.BasicClassificationModel(options)
-    model = models.WSODModel(options)
+    model = models.WSODModel_LargerCAM(options)
 
     model = nn.DataParallel(model).cuda()
     torch.multiprocessing.set_sharing_strategy('file_system')

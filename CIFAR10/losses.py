@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import ipdb
+# import ipdb
 import time
 
 
@@ -23,9 +23,8 @@ class ClusterLoss(torch.nn.Module):
         return -1.0*(F.softmax(logits,dim=0)*F.log_softmax(logits,dim=0)).sum()
     def forward(self, logits):
         """
-        Input: block_feats -> T x (M*K)  # Where M is the number of blocks and K is the
-        number of nodes per block. T is the batch size
-        Output: L = MEL + BEL
+        Input: block_feats -> T x K  # Where K is the number of classes and T is the batch size
+        Output: L = MEL, BEL
         """
         #Mean Entropy Loss - For one-hotness
         #  L1 = Sum_batch_i(Sum_block_m(Entropy(block_i_m)))/TM
@@ -40,6 +39,34 @@ class ClusterLoss(torch.nn.Module):
         L2 = -1.0*self.entropy(mean_output)
 
         return L1.cuda(), L2.cuda()
+
+
+# Stochastic Transformation Stability Loss. Introduced in: 
+# "Regularization With Stochastic Transformations and Perturbations for Deep Semi-Supervised
+# Learning"
+class StochasticTransformationLoss(torch.nn.Module):
+    """
+    The idea behind this is that stochastic transformations of an image (flips and translations)
+    should lead to very close features.
+    """
+    def __init__(self):
+        super(StochasticTransformationLoss, self).__init__()
+    def forward(self, features, num_transformations):
+        """
+        Input: features -> T x D # Where D is the feature dimension and T is the batch size
+               num_transformations -> Number of transformations applied to the data
+               Make sure that T is a multiple of num_transformations
+        Output: ST Loss 
+        """
+        batch_size = features.shape[0]
+        split_features = torch.zeros([num_transformations, batch_size/num_transformations,
+            features.shape[1]])
+        for i in range(num_transformations):
+            indices = torch.Tensor(range(i, batch_size, num_transformations))  # Has to be a longtensor
+            split_features[i,:,:] = torch.index_select(feature, 0, indices)
+
+        
+
 
 
 def get_loss(loss_name ='CE'):

@@ -7,7 +7,8 @@ import argparse
 #
 import models
 import dataLoader
-from train import train_wsod_model, train_wsod_model_multiple, train_wsod_model_larger_CAM, validate_model
+from train import train_wsod_model#, train_wsod_model_multiple, train_wsod_model_larger_CAM
+from train import validate_model
 from losses import get_loss
 from helperFunctions import save_checkpoint, adjust_learning_rate
 
@@ -42,7 +43,7 @@ def argparser():
     parser.add_argument('--sup_json_file', type=str, default='./Data/train_whole_sup_50k_tot_50k.json')
     parser.add_argument('--unsup_json_file', type=str, default='./Data/train_whole_sup_0_tot_150k.json')
     parser.add_argument('--val_on', type=bool, default=False)
-    parser.add_argument('--hist_on', type=bool, default=True)
+    parser.add_argument('--hist_on', type=bool, default=False)
     parser.add_argument('--val_json_file', type=str, default='./Data/val_whole.json')
     parser.add_argument('--train_img_dir', type=str,
             default='/efs2/data/imagenet/train/')
@@ -57,7 +58,7 @@ def argparser():
     parser.add_argument('--mu', type=float, default=2.0)  # Multiplier for LEL_BEL
     parser.add_argument('--accum_batches', type=float, default=1.0)
     parser.add_argument('--learning_rate', type=float, default=0.1)
-    parser.add_argument('--lr_step', type=int, default=20)
+    parser.add_argument('--lr_step', type=int, default=30)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=130)
     parser.add_argument('--num_classes', type=int, default=1000)
@@ -68,10 +69,16 @@ def argparser():
 
 if __name__ == "__main__":
     options = argparser()
+
+    if not os.path.exists(options['save_dir']):
+        os.makedirs(options['save_dir'])
+        os.makedirs(options['log_dir'])
+
     best_avg_prec = 0.0
     is_best = False
-    # model = models.WSODModel(options)
-    model = models.WSODModel_LargerCAM(options)
+    model = models.WSODModel(options)
+    # model = models.WSODModel_LargerCAM(options)
+    # model = models.WSODModel_LargerCAM_SameBranch(options)
     # The following return loss classes
     criterion_cls = get_loss(loss_name='CE')  # Cross-entropy loss
     if options['CAM']:
@@ -187,7 +194,7 @@ if __name__ == "__main__":
 
             print 'Training for epoch:', epoch
             #train_basic_model(train_loader,model,criterion,optimizer,epoch,options)
-            train_wsod_model_larger_CAM(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
+            train_wsod_model(train_loader,model,[criterion_cls,criterion_loc,criterion_clust],optimizer,epoch,options,writer)
 
         writer.close()
     else:

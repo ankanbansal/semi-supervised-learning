@@ -51,6 +51,8 @@ def train_basic_model(train_loader, model, criterion, optimizer, epoch, options)
 
 
 # Train the complete model (With all the losses)
+# Use this if using the vanilla model for semi-supervised classification (WSODModel in models.py) or
+# the single branch model with larger CAMs (WSODModel_LargerCAM_SameBranch in models.py)
 def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, options, summary_writer):
     batch_time = AverageMeter()
     losses_cls = AverageMeter()
@@ -201,6 +203,9 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
 
 
 # Train the complete model (With all the losses)
+# Use this if you are using the model WSODModel_LargerCAM from models.py
+# In this setting there is a separate branch for the locality loss and the main branch is only used
+# for x-entropy, MEL, and NBEL
 def train_wsod_model_larger_CAM(train_loader, model, criterion_list, optimizer, epoch, options, summary_writer):
     batch_time = AverageMeter()
     losses_cls = AverageMeter()
@@ -290,6 +295,8 @@ def train_wsod_model_larger_CAM(train_loader, model, criterion_list, optimizer, 
 
 # Train the model (With only clustering losses and gradient accumulation for larger
 # effective bs)
+# This larger effective batch size is achieved by updating the model only after passing multiple
+# batches through the network
 def train_wsod_model_multiple(train_loader, model, criterion_list, optimizer, epoch, options, summary_writer):
     batch_time = AverageMeter()
     losses_cls = AverageMeter()
@@ -370,8 +377,8 @@ def validate_model(val_loader, model, criterion, options):
         input_img_var = Variable(data['image'].cuda(async=True))
         target_var = Variable(target)
 
-        #_, logits, _ = model(input_img_var, options)
-        _, _, logits, _ = model(input_img_var, options)
+        _, logits, _ = model(input_img_var, options)
+        #_, _, logits, _ = model(input_img_var, options)
 
         loss = criterion(logits, target_var)
 

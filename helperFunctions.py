@@ -5,6 +5,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+import torch
+from torch.autograd import Variable
+
 # Generic Bounding Box class
 class BBox(object):
     def __init__(self,x1,y1,x2,y2):
@@ -102,10 +105,12 @@ def plot_CAMs(val_loader, model, options):
             target_var = Variable(target)
 
             # model returns feature map, logits, and probabilities after applying softmax on logits
-            feat_map, logits, sm_output = model(input_img_var, options)
+            # feat_map, logits, sm_output = model(input_img_var, options)
+            feat_map, logits1, logits2, sm_output = model(input_img_var, options)  # This is for larger CAMs
 
             class_with_max_prob = torch.argmax(sm_output,dim=1)
-            weights = model.module.classifier.weight  # 1000x2208
+            #weights = model.module.classifier.weight  # 1000x2208
+            weights = model.module.classifier1.weight  # 1000x1056 -> This is for larger CAMs
             weights2 = weights.unsqueeze(2).unsqueeze(3)  # 1000x2208x1x1 #Make weights 4-D
             weights3 = weights2.repeat(1,1,feat_map.shape[2],feat_map.shape[3])  # 100x2208x7x7 # Repeat 
             CAMs = torch.zeros([feat_map.shape[0],weights.shape[0],feat_map.shape[2],feat_map.shape[3]])
