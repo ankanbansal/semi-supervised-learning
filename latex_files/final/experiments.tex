@@ -6,12 +6,12 @@ set-up for both datasets and then present results under several scenarios.
 
 \subsection{Set-up}
 \textbf{ImageNet} We fix about 64,000 images for which
-we have labels available (supervised set, $\mathcal{S}$). We use an additional 200,000 images as the
+we have labels available (supervised set, $\mathcal{S}$). We use an additional 192,000 images as the
 unsupervised set, $\mathcal{U}$. We use the ImageNet validation set for testing. It has 50,000
-images spread over all 1,000 classes. We train DenseNet-161 networks scratch and report the
-top-1 accuracy for all our experiments. Unless stated otherwise, we use a batch-size of 52 for all
-ImageNet experiments. We later discuss that this might not be the ideal batch-size. However,
-training with much larger batch-sizes requires vast amounts of time and resources.
+images spread over all 1,000 classes. We train DenseNet-161 networks from scratch and report the
+top-1 error for all our experiments. Unless stated otherwise, we use a batch-size of 52 for all
+ImageNet experiments. %We later discuss that this might not be the ideal batch-size. However,
+%training with much larger batch-sizes requires vast amounts of time and resources.
 
 % Need to report errors instead of accuracy for ImageNet too.
 
@@ -20,16 +20,17 @@ images as the supervised set, and the other 46,000 images as the unsupervised se
 is repeated 5 times with the supervised set selected randomly each time. We test on the CIFAR-10
 test set which contains 10,000 images spread over all 10 classes. The mean and standard
 deviation of the errors are reported as the performance metric. We use the CIFAR-10 specific
-DenseNet-121 network architecture. We use a batch-size of 64 for all CIFAR-10 experiments. 
+DenseNet-121 network architecture \footnote{}. We use a batch-size of 64 for all CIFAR-10
+experiments.
 
 We follow the training details from \cite{densenet} for training all networks. These include
 the optimizer, momentum, and the learning rate schedule.
 
 \subsection{Significance of Unsupervised Losses}
-In this section, we show the utility of each unsupervised component of the loss in equation \ref{eq:total}. We
-start with the baseline model where we use only the supervised images to train the network with only cross-entropy
-loss. We progressively add more components to the optimization objective and report the
-corresponding performance results and observations.
+In this section, we show the utility of each unsupervised component of the loss in equation
+\ref{eq:total}. We start with the baseline model where we use only the supervised images to train
+the network with only cross-entropy loss. We progressively add more components to the optimization
+objective and report the corresponding performance results and observations.
 
 \subsubsection{Baseline}
 As the baseline, we train a network using $\mathcal{S}$ as the training set and only $J_C$ as the
@@ -42,11 +43,11 @@ very far from desired. We show that this gap can be reduced by using the availab
 the proposed loss functions.  
 
 \subsubsection{Cross-entropy + MEL}
-Now, we add the $J_M$ term to the loss function, i.e., $\mathcal{L} = J_C + \alpha
+Now, we add the $J_M$ term (Mean Entropy Loss) to the objective, i.e., $\mathcal{L} = J_C + \alpha
 J_M$ and use $\mathcal{S} \cup \mathcal{U}$ as the training set. We set $\alpha = 0.8$ and vary
 $\frac{R}{T}$, i.e., the proportion of supervised images per batch. As $\frac{R}{T}$ increases, more
 importance is given to the supervised data and loss components. Figure \ref{fig:acc} shows
-the performance for ImageNet as we vary $\frac{R}{T}$ (top) and the variation in performance as we
+the performance for ImageNet as we vary $\frac{R}{T}$. We The variation in performance as we
 increase the amount of unsupervised data used for a fixed $\frac{R}{T} = 0.7$ and a fixed supervised
 set ($\mathcal{S}$) (bottom). 
 % Need to remove the blue line from the curve or make it without dots. 
