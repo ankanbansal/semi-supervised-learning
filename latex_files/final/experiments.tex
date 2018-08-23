@@ -52,55 +52,59 @@ set ($\mathcal{S}$) (bottom).
 % Need to remove the blue line from the curve or make it without dots. 
 \begin{figure}
 	\centering
-	{
 		\includegraphics[scale=0.35]{accuracies.pdf}
-	~
-		\includegraphics[scale=0.35]{accuracies_unsup.pdf}
-	}
-		\caption{(Top) Accuracy on the ImageNet validation set for models trained with the cross-entropy
+		\caption{Accuracy on the ImageNet validation set for models trained with the cross-entropy
 		loss and MEL with $\mathcal{S}\cup\mathcal{U}$ (red). The blue line is the baseline
-		performance and is here only for reference. (Bottom) Accuracy of models trained with
-		cross-entropy loss and MEL with $\mathcal{S}\cup\mathcal{U}$ for $\frac{R}{T} = 0.7$ for
-	different number of unsupervised images.}
+	performance and is here only for reference. (Make this error instead of accuracy)}
 		\label{fig:acc}
 \end{figure}
 
-Similarly, table \ref{tab:cifar_mel_ratio} gives the performance for CIFAR-10 as we vary the
-supervision importance ratio $\frac{R}{T}$ and table \ref{tab:cifar_mel_unsup} shows how performance
-varies as we vary the number of unsupervised images keeping the supervised set fixed. We see similar
-trends in table \ref{tab:cifar_mel_unsup} as in figure \ref{fig:acc} (bottom). As we add more
-unsupervised data with a fixed supervised set, the classification performance improves. This shows
-that our method could be used to improve performance by using more unlabeled images in addition to
-the supervised images during training.
 
-\begin{table}
+\begin{figure}
 	\centering
-	\begin{subtable}{0.15\textwidth}
-	\centering
-	\begin{tabular}{|c|c|}
-		\hline
-		a & b \\
-		\hline
-		c & d\\
-		\hline
-	\end{tabular}
-	\caption{}
-	\label{tab:cifar_mel_ratio}
-	\end{subtable}
-	%
-	\begin{subtable}{0.15\textwidth}
-	\centering
-	\begin{tabular}{|c|c|}
-		\hline
-		a & b \\
-		\hline
-		c & d\\
-		\hline
-	\end{tabular}
-	\caption{}
-	\label{tab:cifar_mel_unsup}
-	\end{subtable}
-\end{table}
+	\includegraphics[scale=0.4]{images/errors_unsup}
+	\caption{Effect of number of unsupervised images with x-entropy + MEL. $|\mathcal{S}|	=
+	64000$}
+	\label{fig:err_unsup}
+\end{figure}
+
+
+%Similarly, table \ref{tab:cifar_mel_ratio} gives the performance for CIFAR-10 as we vary the
+%supervision importance ratio $\frac{R}{T}$ and table \ref{tab:cifar_mel_unsup} shows how performance
+%varies as we vary the number of unsupervised images keeping the supervised set fixed. We see similar
+%trends in table \ref{tab:cifar_mel_unsup} as in figure \ref{fig:acc} (bottom). As we add more
+%unsupervised data with a fixed supervised set, the classification performance improves. This shows
+%that our method could be used to improve performance by using more unlabeled images in addition to
+%the supervised images during training.
+%
+%\begin{table}
+%	\centering
+%	\begin{subtable}{0.15\textwidth}
+%	\centering
+%	\begin{tabular}{|c|c|}
+%		\hline
+%		a & b \\
+%		\hline
+%		c & d\\
+%		\hline
+%	\end{tabular}
+%	\caption{}
+%	\label{tab:cifar_mel_ratio}
+%	\end{subtable}
+%	%
+%	\begin{subtable}{0.15\textwidth}
+%	\centering
+%	\begin{tabular}{|c|c|}
+%		\hline
+%		a & b \\
+%		\hline
+%		c & d\\
+%		\hline
+%	\end{tabular}
+%	\caption{}
+%	\label{tab:cifar_mel_unsup}
+%	\end{subtable}
+%\end{table}
 
 \subsubsection{Cross-entropy + MEL + NBEL}
 Next we add the negative batch-entropy loss to cross-entropy loss and MEL. We vary $\beta$ while
@@ -109,6 +113,10 @@ validation set) of these models hasn't reached the level of the previous cases. 
 believe that this is because of the small batch sizes that we are using. Our next steps for this are
 to increase the batch-size by using more GPUs or accumulating gradients over a few iterations before
 updating the parameters.
+
+\textbf{Utility of NBEL with non-uniform class distribution}
+\newline
+Use NBEL with other non-uniform datasets too. See if the KL-divergence formulation helps. 
 
 \subsubsection{Cross-entropy + Loc}
 In this case, we take the class activation map (CAM) of the class with the highest probability and
@@ -137,78 +145,88 @@ whether the CAMs are becoming more accurate with more training.
 We present results and comparisons.
 
 \begin{table}
-	\centering
-	\begin{tabular}{|c|c|}
-		\hline
-		\textbf{Method} & \textbf{Error} \\
-		\hline
-		Ladder Net \cite{Rasmus2015} & \\
-		\hline
-		Temporal Ensembling \cite{Laine2016}  & \\
-		\hline
-		Regularization \cite{Sajjadi2016a}  & \\
-		\hline
-		CCL \cite{Kamnitsas2018}  & \\
-		\hline
-		Improved Techniques \cite{Salimans2016}  & \\
-		\hline
-		CatGAN \cite{Springenberg2015}  & \\
-		\hline
-		TripleGAN \cite{Li2017}  & \\
-		\hline
-		BadGAN \cite{Dai2017}  & \\
-		\hline
-		\hline
-		Only $J_C$ (Ours)  & \\
-		\hline
-		$J_C + J_M$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_B$ (Ours)  & \\
-		\hline
-		$J_C + J_L$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_L$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_B + J_L$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_B + J_L$ (Ours) $+$  & \\
-		Regularization  & \\
-		\hline
-	\end{tabular}
-	\caption{CIFAR-10 Results}
-	\label{tab:cifar_results}
+		\centering
+		\resizebox{0.5\textwidth}{!}
+		{
+		\begin{tabular}{|c|c|}
+			\hline
+			\textbf{Method} & \textbf{Validation Set Error (\%)}\\
+			\hline
+			Only x-entropy & 57.96\\
+			\hline
+			x-entropy + MEL & 54.75\\
+			\hline
+			x-entropy + MEL + BEL & 57.89\\
+			\hline
+			x-entropy + MEL + BEL & \\
+			(Init from x-entropy + MEL) & \textbf{53.95}\\
+			\hline
+			$J_C + J_L$  & \\
+			\hline
+			$J_C + J_M + J_L$  & \\
+			\hline
+			$J_C + J_M + J_B + J_L$  & \\
+			\hline
+			$J_C + J_M + J_B + J_L$ $+$  & \\
+			Regularization & \\
+			\hline
+			\hline
+			Regularization \cite{Sajjadi2016a} & \\
+			\hline
+		\end{tabular}
+		}
+		\caption{ImageNet Results. $|\mathcal{S}| = 64000, |\mathcal{U}| = 192000$}
+		\label{tab:imagenet_results}
 \end{table}
-
-
-
 
 
 \begin{table}
-	\centering
-	\begin{tabular}{|c|c|}
-		\hline
-		\textbf{Method} & \textbf{Error} \\
-		\hline
-		Regularization \cite{Sajjadi2016a}  & \\
-		\hline
-		\hline
-		Only $J_C$ (Ours)  & \\
-		\hline
-		$J_C + J_M$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_B$ (Ours)  & \\
-		\hline
-		$J_C + J_L$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_L$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_B + J_L$ (Ours)  & \\
-		\hline
-		$J_C + J_M + J_B + J_L$ (Ours) $+$  & \\
-		Regularization  & \\
-		\hline
-	\end{tabular}
-	\caption{ImageNet Results}
-	\label{tab:imagenet_results}
-\end{table}
+		\centering
+		\resizebox{0.5\textwidth}{!}
+		{
+		\begin{tabular}{|c|c|}
+			\hline
+			\textbf{Method} & \textbf{Test Set Error (\%)}\\
+			\hline
+			Only x-entropy & $20.16 \pm $\\
+			\hline
+			x-entropy + MEL & $17.35 \pm $\\
+			\hline
+			x-entropy + MEL + BEL & $17.36 \pm $\\
+			\hline
+			x-entropy + MEL + BEL & \\
+			(Init from x-entropy + MEL) & $14.23 \pm $\\
+			\hline
+			$J_C + J_L$  & \\
+			\hline
+			$J_C + J_M + J_L$  & \\
+			\hline
+			$J_C + J_M + J_B + J_L$  & \\
+			\hline
+			$J_C + J_M + J_B + J_L$ (Ours) $+$  & \\
+			Regularization \cite{Sajjadi2016a}  & \\
 
+			\hline
+			\hline
+			Ladder Net \cite{Rasmus2015} & $20.4 \pm $\\
+			\hline
+			CatGAN \cite{Springenberg2015} & $19.58 \pm $\\
+			\hline
+			Improved Techniques for GANs & $18.63 \pm $\\
+			\hline
+			Compact Latent Space Clustering \cite{Kamnitsas2018} & $18.57 \pm $\\
+			\hline
+			TripleGAN \cite{Li2017} & $16.99 \pm $\\
+			\hline
+			BadGAN \cite{Dai2017} & $14.41 \pm $\\
+			\hline
+			Temporal Ensembling \cite{Laine2016} & $12.16 \pm $\\
+			\hline
+			Regularization with Stochastic & \\
+			Transformations \cite{Sajjadi2016a} & $\mathbf{11.29 \pm }$\\
+			\hline
+		\end{tabular}
+		}
+		\caption{CIFAR-10 Results. Average over 5 runs. $|\mathcal{S}| = 4000, |\mathcal{U}| = 46000$.}
+		\label{tab:cifar_results}
+\end{table}

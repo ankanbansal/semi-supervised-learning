@@ -29,15 +29,22 @@ over the batch \cite{subic}.\\
 \textbf{Negative Batch Entropy Loss (NBEL) (Need to come up with a new name now)}
 \begin{equation}
 	\label{eq:nbel}
-	J_B = D_{KL} (\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t \lVert \mathbf{d})
+	J_B = D_{KL} (\bar{\mathbf{q}} \lVert \mathbf{d})
+	%J_B = D_{KL} (\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t \lVert \mathbf{d})
 \end{equation}
-where $D_{KL}(\mathbf{a} \lVert	\mathbf{b})$ is the KL-divergence between the probability
-distributions $\mathbf{a}$ and $\mathbf{b}$, given as $D_{KL}(\mathbf{a} \lVert \mathbf{b}) =
-\sum_{i=1}^{C}a_i \log(a_i / b_i)$. Note that for datasets which have a uniform distribution of
-classes, like ImageNet and CIFAR-10, (\ref{eq:nbel}) simply reduces to the negative batch
-entropy loss (NBEL):
+where,
 \begin{equation}
-	J_B = -H(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t)
+	\label{eq:avg_out}
+	\bar{\mathbf{q}} = \frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t
+\end{equation}
+is the average output for over a batch, $D_{KL}(\mathbf{a} \lVert \mathbf{b})$ is the KL-divergence
+between the probability distributions $\mathbf{a}$ and $\mathbf{b}$, given as $D_{KL}(\mathbf{a}
+\lVert \mathbf{b}) = \sum_{i=1}^{C}a_i \log(a_i / b_i)$. Note that for datasets which have a uniform
+distribution of classes, like ImageNet and CIFAR-10, (\ref{eq:nbel}) simply reduces to the negative
+batch entropy loss (NBEL):
+\begin{equation}
+	J_B = -H(\bar{\mathbf{q}})
+	%J_B = -H(\frac{1}{T}\sum_{t=1}^{T}\mathbf{q}_t)
 \end{equation}
 
 The first (MEL) tries to increase the confidence of the predicted class and the second (NBEL)
