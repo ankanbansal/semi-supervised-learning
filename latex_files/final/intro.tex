@@ -1,0 +1,76 @@
+\section{Introduction}
+
+% This is all just placeholder text.
+Data-hungry deep neural networks require vast amounts of labeled data. Collecting images from the
+internet has never been easier. However, obtaining annotations for these images is expensive and
+time-consuming. We need to devise algorithms that can use the unlabeled data as well. This unlabeled
+data can be utilized in different ways. In computer vision, these methods can broadly be divided
+into i.) unsupervised learning, ii.) weakly-supervised learning, and iii.) semi-supervised learning.
+
+In unsupervised learning, the aim is to learn discriminative representations from data without any
+supervision from annotations. In weakly-supervised learning, the annotations are provided at a
+coarser-level than the task. For example, for object detection, they could be just image-level
+annotations. Semi-supervised learning is the most general of these settings. Here, annotations for
+some data are available while a large portion of the data is un-annotated. There are several
+variants of semi-supervised learning. These include webly-supervised learning \cite{} and
+omni-supervised learning \cite{}.
+
+In this paper, we present an approach for semi-supervised image classification. The proposed
+approach uses two clustering penalties and a locality penalty. The first one (Mean Entropy Loss (MEL)) encourages the
+classifier to be more confident about its prediction and the second (Negative Batch Entropy Loss
+(NBEL)) incorporates prior knowledge about the class distribution of the dataset into the learning
+pipeline. The locality penalty encodes the notion that objects appear in localized regions of the
+image. These penalties can be applied along with the cross-entropy loss commonly used for
+fully-supervised learning. The benefit of using these penalties is that they can be applied to both
+supervised and unsupervised data. 
+
+The goal of the paper is to propose new unsupervised losses that codify common-sense knowledge about
+the images. The motivation behind the proposed clustering losses is that images occur in clusters
+distributed according to a prior distribution. These are immediately applicable to one-vs-all
+classification. The locality loss enforces the common-sense knowledge
+that objects occupy small regions in the image. This loss is represented through group sparsity
+methods which enjoy translation invariance. Through this loss, this approach provides a means to do
+weakly-supervised object detection.
+The proposed losses do not require any alterations to existing CNN architectures, and are
+compatible with end-to-end training through back-propagation. Another benefit of the approach is
+that the proposed losses can be used in a completely unsupervised setting also and ensembles of such
+models might provide competitive performance. 
+The proposed clustering losses provide a way to deal with class imbalance in the dataset. NBEL
+imposes the condition that the average output class distribution should be the same as the dataset
+class distribution. The dataset class distribution could be non-uniform or uniform. 
+
+The approach proposed here presents a way of making deep neural networks more data efficient. The
+aim is to use only the available supervised data and a large amount of unsupervised data to improve
+the performance of neural networks. We demonstrate the data efficiency of the method by varying the
+number of unsupervised images available during training keeping the supervised set fixed. We show
+that increasing the number of unsupervised images during training leads to better performance.
+Through extensive experiments, we also show the relative importance of supervised and unsupervised
+data during training. 
+
+The next section describes our approach. In section \ref{sec:experiments}, we give details of
+implementation, evaluation, and performance. We put the presented work in context with existing
+literature in section \ref{sec:related} and finally conclude and present directions for further
+research in section \ref{sec:conclusion}.
+
+
+
+%\begin{figure}[t]
+%\begin{center}
+%\fbox{\rule{0pt}{2in} \rule{0.9\linewidth}{0pt}}
+%   %\includegraphics[width=0.8\linewidth]{egfigure.eps}
+%\end{center}
+%   \caption{Example of caption.  It is set in Roman so that mathematics
+%   (always set in Roman: $B \sin A = A \sin B$) may be included without an
+%   ugly clash.}
+%\label{fig:long}
+%\label{fig:onecol}
+%\end{figure}
+%
+%
+%\begin{figure*}
+%\begin{center}
+%\fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
+%\end{center}
+%   \caption{Example of a short caption, which should be centered.}
+%\label{fig:short}
+%\end{figure*}

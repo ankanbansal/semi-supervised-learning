@@ -1,0 +1,26 @@
+\begin{thebibliography}{1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{https://doi.org/#1}
+
+\bibitem{subic}
+Jain, H., Zepeda, J., P{\'e}rez, P., Gribonval, R.: Subic: A supervised,
+  structured binary code for image search. In: Proc. Int. Conf. Computer
+  Vision. vol.~1, p.~3 (2017)
+
+\bibitem{groupsparsity}
+Jenatton, R., Audibert, J.Y., Bach, F.: Structured variable selection with
+  sparsity-inducing norms. Journal of Machine Learning Research
+  \textbf{12}(Oct),  2777--2824 (2011)
+
+\bibitem{sparsepca}
+Jenatton, R., Obozinski, G., Bach, F.: Structured sparse principal component
+  analysis. In: Proceedings of the Thirteenth International Conference on
+  Artificial Intelligence and Statistics. pp. 366--373 (2010)
+
+\bibitem{CAM}
+Zhou, B., Khosla, A., Lapedriza, A., Oliva, A., Torralba, A.: Learning deep
+  features for discriminative localization. In: Proceedings of the IEEE
+  Conference on Computer Vision and Pattern Recognition. pp. 2921--2929 (2016)
+
+\end{thebibliography}

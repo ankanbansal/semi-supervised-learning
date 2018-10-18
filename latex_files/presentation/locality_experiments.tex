@@ -1,0 +1,26 @@
+%\subsection{Locality Experiments}
+\begin{frame}
+	\frametitle{Experiments}
+	\begin{table}
+		\setbeamerfont{caption name}{size=\tiny}
+		\centering
+		\resizebox{\textwidth}{!}
+		{
+		\begin{tabular}{|c|c|}
+			\hline
+			\textbf{Method} & Validation Set Error (\%)\\
+			\hline
+			Only x-entropy & 57.96\\
+			x-entropy + MEL & 54.75\\
+			x-entropy + MEL + BEL (Init from x-entropy + MEL) & \textbf{53.95}\\
+			\hline
+			x-entropy + Locality & 62.17\\
+			x-entropy + MEL + Locality & 58.53\\
+			\hline
+		\end{tabular}
+		}
+		\vspace{-8pt}
+		\caption{\tiny{$|\mathcal{S}| = 64000, |\mathcal{U}| = 192000$}}
+	\end{table}
+	\framesubtitle{ImageNet}
+\end{frame}

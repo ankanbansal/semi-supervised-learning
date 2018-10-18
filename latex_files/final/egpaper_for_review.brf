@@ -1,0 +1,28 @@
+\backcite {}{{1}{1}{section.1}}
+\backcite {}{{1}{1}{section.1}}
+\backcite {subic}{{2}{2.1}{subsection.2.1}}
+\backcite {groupsparsity,sparsepca}{{2}{2.2}{subsection.2.2}}
+\backcite {CAM}{{3}{2.2}{equation.2.13}}
+\backcite {densenet}{{3}{3.1}{subsection.3.1}}
+\backcite {Sajjadi2016a}{{4}{\caption@xref {??}{ on input line 174}}{table.caption.3}}
+\backcite {Sajjadi2016a}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Rasmus2015}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Springenberg2015}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Kamnitsas2018}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Li2017}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Dai2017}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Laine2016}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Sajjadi2016a}{{4}{\caption@xref {??}{ on input line 226}}{table.caption.4}}
+\backcite {Radosavovic2017}{{4}{4}{section.4}}
+\backcite {Sajjadi2016}{{5}{4}{section.4}}
+\backcite {Grandvalet2005}{{5}{4}{section.4}}
+\backcite {Springenberg2015}{{5}{4}{section.4}}
+\backcite {Rasmus2015}{{5}{4}{section.4}}
+\backcite {Salimans2016}{{5}{4}{section.4}}
+\backcite {Laine2016}{{5}{4}{section.4}}
+\backcite {Miyato2017}{{5}{4}{section.4}}
+\backcite {Sajjadi2016a}{{5}{4}{section.4}}
+\backcite {Kamnitsas2018}{{5}{4}{section.4}}
+\backcite {Dai2017}{{5}{4}{section.4}}
+\backcite {Li2017}{{5}{4}{section.4}}
+\backcite {Luo2017}{{5}{4}{section.4}}
