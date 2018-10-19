@@ -30,7 +30,7 @@ class WSODModel(nn.Module):
 
     def forward(self, img, options):
         if self.arch == 'densenet_cifar':
-            logits = self.pretrained_model(img)
+            lin_feat, logits = self.pretrained_model(img)
         elif self.arch == 'densenet121':
             feat_map = self.features(img)
             feat_map_relu = F.relu(feat_map,inplace=True)
@@ -38,5 +38,5 @@ class WSODModel(nn.Module):
             logits = self.classifier(lin_feat)
 
         final_output = F.softmax(logits)
-        return logits, final_output
+        return lin_feat, logits, final_output
 

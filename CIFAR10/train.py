@@ -36,7 +36,7 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         target_var = Variable(data[1].cuda(async=True))
 
         # model returns feature map, logits, and probabilities after applying softmax on logits
-        logits, sm_output = model(input_img_var, options)
+        features, logits, sm_output = model(input_img_var, options)
         class_with_max_prob = torch.argmax(sm_output,dim=1)
 
         # Calculate losses
@@ -44,7 +44,8 @@ def train_wsod_model(train_loader, model, criterion_list, optimizer, epoch, opti
         loss_2, loss_3 = criterion_clust(logits)
         # Try passing feature also instead of logits
         #loss_4 = criterion_reg(logits, options['num_transformations'], options['reg_distance_type'])
-        loss_4 = criterion_reg(sm_output, options['num_transformations'], options['reg_distance_type'])
+        #loss_4 = criterion_reg(sm_output, options['num_transformations'], options['reg_distance_type'])
+        loss_4 = criterion_reg(features, options['num_transformations'], options['reg_distance_type'])
 
         loss = loss_0 + options['alpha']*loss_2 + options['beta']*loss_3 + options['delta']*loss_4
 
@@ -98,7 +99,7 @@ def validate_model(val_loader, model, criterion, options):
         target = data[1].cuda(async=True)
         target_var = Variable(target)
 
-        logits, _ = model(input_img_var, options)
+        _, logits, _ = model(input_img_var, options)
 
         loss = criterion(logits, target_var)
 

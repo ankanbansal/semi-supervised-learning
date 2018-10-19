@@ -80,9 +80,9 @@ class DenseNet(nn.Module):
         out = self.trans3(self.dense3(out))
         out = self.dense4(out)
         out = F.avg_pool2d(F.relu(self.bn(out)), 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        feat = out.view(out.size(0), -1)
+        out = self.linear(feat)
+        return feat, out
 
 def DenseNet121():
     return DenseNet(Bottleneck, [6,12,24,16], growth_rate=32)
@@ -102,7 +102,7 @@ def densenet_cifar():
 def test():
     net = densenet_cifar()
     x = torch.randn(1,3,32,32)
-    y = net(x)
+    _, y = net(x)
     print(y)
 
 # test()

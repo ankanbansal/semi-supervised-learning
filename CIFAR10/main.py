@@ -39,7 +39,7 @@ def argparser():
         'cosine', 'KL'])
     parser.add_argument('--val_batch_size', type=int, default=64)
     parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--data_dir', type=str, default='/scratch1/Amazon/data/')
+    parser.add_argument('--data_dir', type=str, default='/scratch1/Rainforest/data/')
     parser.add_argument('--val_on', type=bool, default=False)
     parser.add_argument('--save_dir', type=str, default='./sup_4k_tot_50k/temp_checkpoints/')
     parser.add_argument('--num_sup', type=int, default=4000)

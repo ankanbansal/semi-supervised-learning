@@ -1,13 +1,13 @@
-CUDA_VISIBLE_DEVICES=6 python main.py --log_dir \
-./sup_4k_tot_50k/logs_MEL_reg/sm/ratio0.7/cosine/alpha0.8_delta0.5/ \
-    --type cls_MEL_reg --reg_distance_type cosine --data_dir \
-/vulcan/scratch/ankan/Amazon/data/ \
+CUDA_VISIBLE_DEVICES=1 python main.py --log_dir \
+./sup_4k_tot_50k/logs_MEL_reg/feat/ratio0.7/alpha0.8_delta0.4/ \
+    --type cls_MEL_reg --reg_distance_type Euclidean --data_dir \
+/fs/janus-scratch/ankan/Rainforest/data/ \
     --val_on True \
     --save_dir \
-./sup_4k_tot_50k/checkpoints_MEL_reg/sm/ratio0.7/cosine/alpha0.8_delta0.5/ \
+./sup_4k_tot_50k/checkpoints_MEL_reg/feat/ratio0.7/alpha0.8_delta0.4/ \
     --batch_size 128 \
     --num_workers 0 \
-    --delta 0.5 \
+    --delta 0.4 \
     --runs 5 \
     --lr_step 40 \
     --epochs 100 \
