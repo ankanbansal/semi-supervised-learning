@@ -5,7 +5,6 @@ import numpy as np
 
 import torch
 
-
 class AverageMeter(object):
     def __init__(self):
         self.reset()
@@ -51,7 +50,7 @@ def error(output, target):
     maxk = 1
     batch_size = target.size(0)
     _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t() #transpose
+    pred = pred.t() 
     correct = pred.eq(target.view(1, -1).expand_as(pred)) #element-wise equality
     incorrect = 1 - correct
     incorrect_k = incorrect.view(-1).float().sum(0)

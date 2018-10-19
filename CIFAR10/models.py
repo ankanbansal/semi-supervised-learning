@@ -13,7 +13,6 @@ from torchvision import transforms
 
 from densenet import densenet_cifar
 
-
 class WSODModel(nn.Module):
     """
         The best performance is achieved by densenet_cifar model. Implementation has been obtained
@@ -28,14 +27,16 @@ class WSODModel(nn.Module):
             pretrained_model = tv_models.densenet121(pretrained=False,growth_rate=12)
             self.features = pretrained_model.features
             self.classifier = nn.Linear(pretrained_model.classifier.in_features,options['num_classes'])
+
     def forward(self, img, options):
         if self.arch == 'densenet_cifar':
             logits = self.pretrained_model(img)
         elif self.arch == 'densenet121':
-            feat_map = self.features(img) 
+            feat_map = self.features(img)
             feat_map_relu = F.relu(feat_map,inplace=True)
             lin_feat = feat_map_relu.view(feat_map_relu.size(0),-1)
             logits = self.classifier(lin_feat)
 
         final_output = F.softmax(logits)
         return logits, final_output
+
