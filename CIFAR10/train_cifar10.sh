@@ -1,14 +1,18 @@
-CUDA_VISIBLE_DEVICES=1 python main.py --log_dir \
-./sup_4k_tot_50k/logs_MEL_reg/feat/ratio0.7/alpha0.8_delta0.4/ \
-    --type cls_MEL_reg --reg_distance_type Euclidean --data_dir \
-/fs/janus-scratch/ankan/Rainforest/data/ \
+CUDA_VISIBLE_DEVICES=6 python main.py --log_dir \
+./temp/logs/ \
+    --type cls_clust_reg --reg_distance_type cosine --data_dir \
+/vulcan/scratch/ankan/Amazon/data/ \
+    --resume temp/checkpoints/run_0/checkpoint_cls_MEL_reg_epoch_98.pth.tar\
     --val_on True \
     --save_dir \
-./sup_4k_tot_50k/checkpoints_MEL_reg/feat/ratio0.7/alpha0.8_delta0.4/ \
+./temp/checkpoints/ \
     --batch_size 128 \
     --num_workers 0 \
-    --delta 0.4 \
-    --runs 5 \
+    --delta 0.5 \
+    --runs 1 \
+    --learning_rate 0.1 \
     --lr_step 40 \
     --epochs 100 \
-    --print_freq 100
+    --print_freq 100 \
+    --temp_file ./temp/sup_indices.json \
+    --sup_indices_file ./temp/sup_indices.json

@@ -55,6 +55,8 @@ def argparser():
     parser.add_argument('--epochs', type=int, default=350)
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--print_freq', type=int, default=10)
+    parser.add_argument('--sup_indices_file', type=str, default=None)
+    parser.add_argument('--temp_file', type=str, default='temp/sup_indices.json')
 
     options = vars(parser.parse_args())
     return options
@@ -124,7 +126,7 @@ if __name__ == "__main__":
                 if os.path.isfile(options['resume']):
                     print 'Loading checkpoint {}...'.format(options['resume'])
                     checkpoint = torch.load(options['resume'])
-                    options['start_epoch'] = checkpoint['epoch']
+                    options['start_epoch'] = 0#checkpoint['epoch']
                     best_avg_prec = checkpoint['best_avg_prec']
                     model.load_state_dict(checkpoint['state_dict'])
                 else:
